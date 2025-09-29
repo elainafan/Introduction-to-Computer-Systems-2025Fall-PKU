@@ -23,4 +23,4 @@ Data Lab对应的为教材第二章《信息的表示与处理》，主要考察
 | fullAdd (x, y)           | =将 x + y 对16取模                           | 2       | 30      |
 | rotateLeft (x, n)        | 将 x 的二进制表示循环左移 n 位                | 3       | 25      |
 | bitParity (x)            | 判断 x 的二进制表示中是否有奇数个1             | 4       | 20     |
-| palindrome (x)           | 判断x的二进制表示是否回文                      | 4       | 40     |
+| palindrome (x)           | 判断 x 的二进制表示是否回文                    | 4      | 40     |
