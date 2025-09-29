@@ -16,7 +16,7 @@ Data Lab对应的为教材第二章《信息的表示与处理》，主要考察
 
 位运算：
 
-| Name                     | Description                                 | Rateing | Max ops |
+| Name                     | Description                                 | Rating  | Max ops |
 | ------------------------ | ------------------------------------------- | ------- | ------- |
 | bitOr (x,y)              | 仅使用～和 \& 来实现 x \| y                  | 1       | 8        |
 | upperBits (n)            | 将32位二进制的高 n 位设置为1                  | 1       | 10      |
@@ -27,7 +27,7 @@ Data Lab对应的为教材第二章《信息的表示与处理》，主要考察
 
 补码运算：
 
-| Name                     | Description                                 | Rateing | Max ops |
+| Name                     | Description                                 | Rating  | Max ops |
 | ------------------------ | ------------------------------------------- | ------- | ------- |
 | negate (x)               | 对 x 取相反数                                | 2       | 5       |
 | oneMoreThan (x, y)       | 判断 y 是否比 x 大1                          | 2       | 15      |
