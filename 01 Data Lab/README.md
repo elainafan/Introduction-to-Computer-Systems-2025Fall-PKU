@@ -651,5 +651,5 @@ Points  Rating  Errors  Points  Ops     Puzzle
 4       4       0       2       9       float_pwr2
 
 Score = 80/80 [48/48 Corr + 32/32 Perf] (256 total operators)
-````
+```
 于是，完成了ICS的第一个Lab，Congratulations!
