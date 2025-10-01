@@ -524,7 +524,19 @@ unsigned float_half(unsigned uf) {
 - 特殊要求：本题可以使用条件和循环语句。
 - 特殊要求：本题可以使用大整数。
 #### Solution
+由于``int``类型的精度有``31``位，而``float``类型的精度只有``23``位，因此在转换时会有精度损失。
 
+首先，尽可能把原数的``前导零``去掉，使得容易处理指数位。
+
+同时，还需要将负数转换为正数，以便处理，最后只需要加上``符号位``即可。
+
+此时，``0``和``TMIN``就会妨碍去除前导零和取补码，应当先特判。
+
+随后，需要取出``float``类型的尾数位并去掉规格化数隐含的前导1，结合掩码实现。
+
+接着，对被舍入的尾数判断是否需要进位，并判断加上进位后的尾数是否超过范围了，多余的移给指数位。
+
+最后，将符号位、指数位和尾数位拼接起来。
 
 基于上述思路，得到以下代码：
 ```
@@ -532,16 +544,16 @@ unsigned float_i2f(int x) {
   unsigned x_sign=(x>>31)&1,x_e=31,x_m,is_add,bias=0x7F,ux_e,mask=0x7FFFFF;
   if(x==0) return 0;
   if(x==(1<<31)) return 0xCF000000;
-  if(x_sign) x=-x;
-  while(!(x>>x_e)) x_e--;
-  ux_e=x_e+bias;
-  x=x<<(31-x_e);
-  x_m=(x>>8)&mask;
-  is_add=x&0xFF;
+  if(x_sign) x=-x; # 特判
+  while(!(x>>x_e)) x_e--; # 找到有效位
+  ux_e=x_e+bias; # 得到指数位
+  x=x<<(31-x_e); # 取出x的有效位
+  x_m=(x>>8)&mask; # 去掉规格化数隐含的前导1
+  is_add=x&0xFF; # 判断是否要进位
   x_m+=((is_add>0x80) || ((is_add==0x80)&&(x_m&1)));
   if(x_m>>23){
     x_m=x_m&mask;ux_e++;
-  }
+  } # 小数位溢出
   return (x_sign<<31) | (ux_e<<23) | x_m;
 }
 ```
@@ -615,3 +627,29 @@ unsigned float_pwr2(int x) {
 }
 ```
 注：该代码无法通过本地``./bddcheck/check.pl``测试，但是在``Autolab``上满分，原因未知。
+
+## 进行评测
+运行``make``以及``./driver.pl``，得到以下结果：
+```
+Correctness Results     Perf Results
+Points  Rating  Errors  Points  Ops     Puzzle
+1       1       0       2       4       bitOr
+1       1       0       2       7       upperBits
+2       2       0       2       11      fullAdd
+3       3       0       2       12      rotateLeft
+4       4       0       2       11      bitParity
+4       4       0       2       24      palindrome
+2       2       0       2       2       negate
+2       2       0       2       9       oneMoreThan
+3       3       0       2       6       ezThreeFourths
+3       3       0       2       21      isLess
+3       3       0       2       11      satMul2
+4       4       0       2       58      modThree
+4       4       0       2       23      float_half
+4       4       0       2       28      float_i2f
+4       4       0       2       20      float64_f2i
+4       4       0       2       9       float_pwr2
+
+Score = 80/80 [48/48 Corr + 32/32 Perf] (256 total operators)
+````
+于是，完成了ICS的第一个Lab，Congratulations!
