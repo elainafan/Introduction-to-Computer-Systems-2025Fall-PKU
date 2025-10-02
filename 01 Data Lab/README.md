@@ -671,3 +671,5 @@ Points  Rating  Errors  Points  Ops     Puzzle
 Score = 80/80 [48/48 Corr + 32/32 Perf] (256 total operators)
 ```
 于是，完成了ICS的第一个Lab，Congratulations!
+## 参考文献
+[Arthals-更适合北大宝宝体质的Data Lab踩坑记](https://arthals.ink/blog/data-lab#float64_f2i)
