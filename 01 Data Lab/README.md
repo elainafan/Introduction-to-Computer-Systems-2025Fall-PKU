@@ -385,6 +385,24 @@ int ezThreeFourths(int x) {
 - 最大操作次数：24
 - 分值：3
 #### Solution
+一个显然的思路是，取出``y - (~x) + 1``的符号位，但是会受到溢出的影响。   
+
+因此，需要通过分类讨论进行逐步排查。  
+- 若``x, y``异号，则``x < y``当且仅当``x``是负数，``y``是正数。  
+- 若``x, y``同号，则``x < y``转化为``x - y + 1 <= 0``，即``x + ~y <=0``，于是转化为``x + ~y``的符号位判断。  
+
+基于以上思路，得到以下代码：
+```
+int isLess(int x, int y) {
+  int x_is_equal_to_y=x^y;
+  int x_sign=(x>>31)&1,y_sign=(y>>31)&1;
+  int sum=((x+(~y))>>31)&1;
+  int is_not_same_sign=(x_sign^y_sign)&((x_sign^0)&(y_sign^1));
+  int is_the_same_sign=!(x_sign^y_sign);
+  int res= (is_not_same_sign | (is_the_same_sign & sum)) & !!(x_is_equal_to_y);
+  return res;
+}
+```
 
 ### satMul2
 - 要求：计算``x * 2``的结果，若正溢出则返回``TMAX``，若负溢出则返回``TMIN``。
