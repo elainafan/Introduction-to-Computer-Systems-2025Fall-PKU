@@ -305,11 +305,13 @@ end
 了解了基本逻辑后，得到基本思路：在``call <string_not_equal>``之前设置断点，得到``%rsi``的具体值，即为答案。
 
 首先，打开``psol.txt``文件，随便输入一行:
+
 ```
 I love elaina.
 ```
 
 然后运行以下指令：
+
 ```
 gdb bomb
 b *(phase_1+15)
@@ -343,7 +345,7 @@ c
 ### Phase 2
 注释掉``b phase_1``，便于调试。
 
-阅读``Phase_2``的源码：
+先阅读``Phase_2``的源码：
 
 ```
 00000000000017a8 <phase_2>:
@@ -385,6 +387,7 @@ c
 ```
 
 于是，基本弄懂了这个函数的逻辑，用C代码写来就是：
+
 ```
 int a[6];
 if(a[0]!=1) bomb!
@@ -395,6 +398,7 @@ for(int i=1;i<=5;i++){
 
 其实``%rsp+24``存放金丝雀值已经很清楚了，输入六个``int``类型变量，然后从栈顶开始往高地址存储，刚好是24个字节。
 以防万一，阅读``read_six_numbers``函数，看看这六个数字的存储顺序。
+
 ```
 00000000000020a0 <read_six_numbers>:
     20a0:	f3 0f 1e fa          	endbr64 # 防ROP攻击
@@ -419,9 +423,11 @@ for(int i=1;i<=5;i++){
 ```
 
 再看一下``sccanf``函数的签名：
+
 ```
 int sscanf(const char *str, const char *format, ...);
 ```
+
 - ``str``：要读取的字符串
 - ``format``：指定输入格式控制
 - ``...``：可变数量的额外参数
@@ -429,6 +435,7 @@ int sscanf(const char *str, const char *format, ...);
 观察到前六个参数对应的寄存器名字都在``read_six_numbers``中出现了，同时它们在栈中是向上存储的。
 
 结合前面提出的思路，得到答案：
+
 ``1 2 4 8 16 32``
 
 把它写到``psol.txt``的第二行，打开以下终端，运行以下指令：
@@ -448,6 +455,7 @@ c
 注释掉``b phase_2``，便于调试。
 
 先阅读``Phase_3``的源码：
+
 ```
 0000000000001819 <phase_3>:
     1819:	f3 0f 1e fa          	endbr64 # 防ROP攻击
@@ -524,6 +532,7 @@ c
 可以观察到，在这个函数中仍然存在``sscanf``函数。
 
 运行以下指令，看看它输入了什么：
+
 ```
 gdb bomb
 layout asm
@@ -579,8 +588,327 @@ layout regs
 c
 ```
 
-得到以下输出，表明已经完成了``phase_3``：
+得到以下输出，表示已经完成了``phase_3``：
 
 ![alt text](./Picture%20Assets/6.png)
 
 ### Phase 4
+注释掉``b phase_3``，便于调试。
+
+先阅读``phase_4``的源码：
+
+```
+000000000000193d <phase_4>:
+    193d:	f3 0f 1e fa          	endbr64 # 防ROP攻击
+    1941:	48 83 ec 18          	sub    $0x18,%rsp # %rsp分配24个字节空间
+    1945:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax # %rax=金丝雀值
+    194c:	00 00 
+    194e:	48 89 44 24 08       	mov    %rax,0x8(%rsp) # 金丝雀值存放在(%rsp+8)处
+    1953:	31 c0                	xor    %eax,%eax # %eax置零
+    1955:	48 8d 4c 24 04       	lea    0x4(%rsp),%rcx # %rcx=(%rsp+4)
+    195a:	48 89 e2             	mov    %rsp,%rdx %rdx=(%rsp+4)
+    195d:	48 8d 35 bc 2c 00 00 	lea    0x2cbc(%rip),%rsi        # 4620 <transition_table+0x340> # 将内存中的某个值赋给%rsi，第二个参数
+    1964:	e8 d7 f9 ff ff       	call   1340 <__isoc99_sscanf@plt> # 调用输入函数
+    1969:	83 f8 02             	cmp    $0x2,%eax # 若%eax!=2，跳转爆炸
+    196c:	75 0c                	jne    197a <phase_4+0x3d>
+    196e:	8b 04 24             	mov    (%rsp),%eax # %eax=(%rsp)
+    1971:	85 c0                	test   %eax,%eax # 若%eax<0，跳转爆炸
+    1973:	78 05                	js     197a <phase_4+0x3d>
+    1975:	83 f8 0e             	cmp    $0xe,%eax # 若%eax>14，不跳转导致爆炸
+    1978:	7e 05                	jle    197f <phase_4+0x42>
+    197a:	e8 9b 06 00 00       	call   201a <explode_bomb>
+    197f:	ba 0e 00 00 00       	mov    $0xe,%edx # %edx=14
+    1984:	be 00 00 00 00       	mov    $0x0,%esi # %esi=0
+    1989:	8b 3c 24             	mov    (%rsp),%edi # %edi=(%rsp)
+    198c:	e8 6b ff ff ff       	call   18fc <func4> # 调用func4
+    1991:	83 f8 06             	cmp    $0x6,%eax # 若%eax!=0，跳转爆炸
+    1994:	75 07                	jne    199d <phase_4+0x60> 
+    1996:	83 7c 24 04 06       	cmpl   $0x6,0x4(%rsp) # 若(%rsp+4)!=6,不跳转导致爆炸
+    199b:	74 05                	je     19a2 <phase_4+0x65>
+    199d:	e8 78 06 00 00       	call   201a <explode_bomb>
+    19a2:	48 8b 44 24 08       	mov    0x8(%rsp),%rax # 检验金丝雀值
+    19a7:	64 48 2b 04 25 28 00 	sub    %fs:0x28,%rax
+    19ae:	00 00 
+    19b0:	75 05                	jne    19b7 <phase_4+0x7a> 
+    19b2:	48 83 c4 18          	add    $0x18,%rsp # 释放空间
+    19b6:	c3                   	ret # 返回
+    19b7:	e8 e4 f8 ff ff       	call   12a0 <__stack_chk_fail@plt>
+```
+
+阅读完上面的源码，结合``sscanf``函数的原理，按照相同的检查方法，发现需要输入两个整数，同时第一个整数必须是 $0 \sim 14$ 之间的整数。
+
+同时，注意到以下语句：
+
+```
+1991:	83 f8 06             	cmp    $0x6,%eax # 若%eax!=0，跳转爆炸
+1994:	75 07                	jne    199d <phase_4+0x60> 
+1996:	83 7c 24 04 06       	cmpl   $0x6,0x4(%rsp) # 若(%rsp+4)!=6,不跳转导致爆炸
+199b:	74 05                	je     19a2 <phase_4+0x65>
+```
+
+确定以下条件，即第二个输入数为6，并且``func4``的返回值要为6。
+
+阅读``func4``的源码：
+
+传入的参数为``%edi=(%rsp),%esi=0,%edx=14``
+
+```
+00000000000018fc <func4>:
+    18fc:	f3 0f 1e fa          	endbr64 # 防ROP攻击
+    1900:	48 83 ec 08          	sub    $0x8,%rsp # %rsp分配8个字节空间
+    1904:	89 d1                	mov    %edx,%ecx # %ecx=%edx
+    1906:	29 f1                	sub    %esi,%ecx # %ecx-=%esi
+    1908:	89 c8                	mov    %ecx,%eax # %eax=$ecx
+    190a:	c1 e8 1f             	shr    $0x1f,%eax # 
+    190d:	01 c8                	add    %ecx,%eax # %eax+=%ecx
+    190f:	d1 f8                	sar    $1,%eax # %eax=%eax/2
+    1911:	01 f0                	add    %esi,%eax # %eax+=%esi
+    1913:	39 f8                	cmp    %edi,%eax # 若%eax>%edi,跳转；若%eax<%edi，跳转
+    1915:	7f 0c                	jg     1923 <func4+0x27> 
+    1917:	7c 16                	jl     192f <func4+0x33>
+    1919:	b8 00 00 00 00       	mov    $0x0,%eax # %eax=0
+    191e:	48 83 c4 08          	add    $0x8,%rsp # 恢复栈位
+    1922:	c3                   	ret # 返回
+    1923:	8d 50 ff             	lea    -0x1(%rax),%edx # %edx=%rax-1
+    1926:	e8 d1 ff ff ff       	call   18fc <func4> #递归调用func4
+    192b:	01 c0                	add    %eax,%eax # %eax=%eax*2
+    192d:	eb ef                	jmp    191e <func4+0x22> # 跳转到返回
+    192f:	8d 70 01             	lea    0x1(%rax),%esi # %esi=%rax+1
+    1932:	e8 c5 ff ff ff       	call   18fc <func4> # 递归调用func4
+    1937:	8d 44 00 01          	lea    0x1(%rax,%rax,1),%eax # %eax=2*%rax+1
+    193b:	eb e1                	jmp    191e <func4+0x22> # 跳转到返回
+```
+
+阅读这段代码，大致能给出以下递归结构：
+
+```
+int func4(int x, int y, int z){
+    int res = z - y;
+    res = res >> 31; (此处为逻辑右移)
+    res += (z - y);
+    res = res >> 1; (此处为算术右移)
+    res += y;
+    if(x < res){
+        return 2 * func4(x, y, res - 1);
+    }
+    else if(x > res){
+        return 2 * func4(x, res + 1, z) + 1;
+    }
+    return 0;
+}
+```
+
+于是，只需解出使这个函数返回值为6的第一个参数值即可。
+
+计算得出``x = 6``，于是得出答案：
+
+``6 6``
+
+将答案写到``psol.txt``的第四行，运行以下指令：
+
+```
+gdb bomb
+layout asm
+layout regs
+c
+```
+
+得到以下输出，表示已经完成了``phase_4``：
+
+![alt text](./Picture%20Assets/7.png)
+
+### Phase 5
+注释掉``b phase_5``，便于调试。
+
+先阅读``phase_5``的源码：
+
+```
+00000000000019bc <phase_5>:
+    19bc:	f3 0f 1e fa          	endbr64 # 防ROP攻击
+    19c0:	53                   	push   %rbx # %rbx进栈
+    19c1:	48 89 fb             	mov    %rdi,%rbx # %rbx=%rdi
+    19c4:	e8 24 03 00 00       	call   1ced <string_length> # 调用<string_length>函数
+    19c9:	83 f8 04             	cmp    $0x4,%eax # 如果%eax不为4则跳转爆炸
+    19cc:	75 0c                	jne    19da <phase_5+0x1e>
+    19ce:	b9 01 00 00 00       	mov    $0x1,%ecx # %ecx=1
+    19d3:	b8 00 00 00 00       	mov    $0x0,%eax # %eax=1
+    19d8:	eb 1f                	jmp    19f9 <phase_5+0x3d> # 跳转
+    19da:	e8 3b 06 00 00       	call   201a <explode_bomb>
+    19df:	eb ed                	jmp    19ce <phase_5+0x12>
+    19e1:	48 63 d0             	movslq %eax,%rdx # %rdx=%eax
+    19e4:	0f b6 14 13          	movzbl (%rbx,%rdx,1),%edx # %edx=%rbx+%rdx
+    19e8:	83 e2 07             	and    $0x7,%edx # %edx=%edx&7
+    19eb:	48 8d 35 ce 28 00 00 	lea    0x28ce(%rip),%rsi        # 42c0 <array.0> # 把%rsi设为某个地址
+    19f2:	0f af 0c 96          	imul   (%rsi,%rdx,4),%ecx # %ecx*=(%rsi+4*%rdx)
+    19f6:	83 c0 01             	add    $0x1,%eax # %eax++
+    19f9:	83 f8 03             	cmp    $0x3,%eax # 若%eax<=3则跳转
+    19fc:	7e e3                	jle    19e1 <phase_5+0x25>
+    19fe:	81 f9 20 01 00 00    	cmp    $0x120,%ecx # %ecx!=120，则跳转爆炸
+    1a04:	75 02                	jne    1a08 <phase_5+0x4c>
+    1a06:	5b                   	pop    %rbx # %rbx恢复原值
+    1a07:	c3                   	ret # 退出
+    1a08:	e8 0d 06 00 00       	call   201a <explode_bomb>
+    1a0d:	eb f7                	jmp    1a06 <phase_5+0x4a>
+```
+
+给代码打上注释后，会发现此题并没有前面所用的``sscanf``函数，但是通过下面这两行判断应该输入一个长度为4的字符串：
+
+```
+19c4:	e8 24 03 00 00       	call   1ced <string_length> # 调用<string_length>函数
+19c9:	83 f8 04             	cmp    $0x4,%eax # 如果%eax不为4则跳转爆炸
+19cc:	75 0c                	jne    19da <phase_5+0x1e>
+```
+
+同时，由代码可知，这个字符串被保存在``%rdi``中。
+
+当读取了字符串长度并判断成功后，``%eax``被置零，同时后续跳转后有个判断``%eax``是否小于等于3的函数，很容易判断出这是个循环结构。
+
+最终的成功条件为``%ecx == 288``，而与``%ecx``相关的仅有这一句``imul   (%rsi,%rdx,4),%ecx``。
+
+此时要研究的就是，乘上去的到底是什么？
+
+```
+19e1:	48 63 d0             	movslq %eax,%rdx # %rdx=%eax
+19e4:	0f b6 14 13          	movzbl (%rbx,%rdx,1),%edx # %edx=%rbx+%rdx
+19e8:	83 e2 07             	and    $0x7,%edx # %edx=%edx&7
+```
+
+由于初始时，``%rbx``就用于存放字符串的开头``%rdi``，因此这里就是取出``第i个字符``给``%edx``，然后再令``%edx = %edx & 7``。
+
+通过反汇编得出的注释，知道了``%rsi``这里被赋为一个数组的开头，而这个数组由于使用 $0 \sim 7$ 的偏移量(见``%rdx``的取值范围)，因此它必然是含8个元素的数组。
+
+先在``psol.txt``文件的第五行随便输入四个字符的字符串，如``GGGG``。
+
+使用GDB工具看看这个数组是啥：
+
+```
+gdb bomb
+b *(phase_5+54)
+layout asm
+layout regs
+c
+x/8d $rsi
+```
+
+得到以下结果：
+
+![alt text](./Picture%20Assets/8.png)
+
+也就得到了，这个数组的各个元素的值。
+
+那么，题意也就一目了然了。对于第i次循环 ( $0 \leq i \leq 3$ )，取出第i个个字符，取它的低3位作为偏移量，所取出的数组元素之乘积需要为``288``。
+
+找出一张ASCIL码表，笔者选取的答案为：``CCDG``。
+
+将``psol.txt``的第五行替换为答案，运行以下命令：
+
+```
+gdb bomb
+layout asm 
+layout regs
+c
+```
+
+得到以下输出，表示已经完成了``phase_5``:
+
+![alt text](./Picture%20Assets/9.png)
+
+### Phase 6
+注释掉``b phase_6``，便于调试。
+
+先阅读``phase_6``的源码：
+
+```
+0000000000001a0f <phase_6>:
+    1a0f:	f3 0f 1e fa          	endbr64 # 防ROP攻击
+    1a13:	41 54                	push   %r12 # %r12进栈
+    1a15:	55                   	push   %rbp # %rbp进栈
+    1a16:	53                   	push   %rbx # %rbx进栈
+    1a17:	48 83 ec 60          	sub    $0x60,%rsp # %rsp分配96个字节空间
+    1a1b:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax # %rax赋值为金丝雀值
+    1a22:	00 00 
+    1a24:	48 89 44 24 58       	mov    %rax,0x58(%rsp) # 金丝雀值存放于%rsp+88处
+    1a29:	31 c0                	xor    %eax,%eax # %eax=0
+    1a2b:	48 89 e6             	mov    %rsp,%rsi # %rsi=%rsp
+    1a2e:	e8 6d 06 00 00       	call   20a0 <read_six_numbers> # 调用<read_six_numbers>函数
+    1a33:	bd 00 00 00 00       	mov    $0x0,%ebp # %ebp=0
+    1a38:	eb 27                	jmp    1a61 <phase_6+0x52> # 跳转
+    1a3a:	e8 db 05 00 00       	call   201a <explode_bomb>
+    1a3f:	eb 33                	jmp    1a74 <phase_6+0x65>
+    1a41:	83 c3 01             	add    $0x1,%ebx
+    1a44:	83 fb 05             	cmp    $0x5,%ebx # %ebx>5，则跳转
+    1a47:	7f 15                	jg     1a5e <phase_6+0x4f> 
+    1a49:	48 63 c5             	movslq %ebp,%rax # %rax=%ebp
+    1a4c:	48 63 d3             	movslq %ebx,%rdx # %ebx=%rdx
+    1a4f:	8b 3c 94             	mov    (%rsp,%rdx,4),%edi # %edi=(%rsp+4*%rdx)
+    1a52:	39 3c 84             	cmp    %edi,(%rsp,%rax,4) # 若%edi==(%rsp+%rax*4)，则不跳转导致爆炸
+    1a55:	75 ea                	jne    1a41 <phase_6+0x32>
+    1a57:	e8 be 05 00 00       	call   201a <explode_bomb>
+    1a5c:	eb e3                	jmp    1a41 <phase_6+0x32>
+    1a5e:	44 89 e5             	mov    %r12d,%ebp # %r12d=%ebp
+    1a61:	83 fd 05             	cmp    $0x5,%ebp # 若%ebp大于5跳转
+    1a64:	7f 17                	jg     1a7d <phase_6+0x6e>
+    1a66:	48 63 c5             	movslq %ebp,%rax # %rax=%ebp
+    1a69:	8b 04 84             	mov    (%rsp,%rax,4),%eax # %eax=(%rsp+%rax*4)
+    1a6c:	83 e8 01             	sub    $0x1,%eax # %eax-=1
+    1a6f:	83 f8 05             	cmp    $0x5,%eax # 若%eax>5，跳转爆炸
+    1a72:	77 c6                	ja     1a3a <phase_6+0x2b>
+    1a74:	44 8d 65 01          	lea    0x1(%rbp),%r12d # %r12d=(%rbp+1)
+    1a78:	44 89 e3             	mov    %r12d,%ebx # %ebx=%r12d
+    1a7b:	eb c7                	jmp    1a44 <phase_6+0x35> 跳转
+    1a7d:	be 00 00 00 00       	mov    $0x0,%esi
+    1a82:	eb 17                	jmp    1a9b <phase_6+0x8c>
+    1a84:	48 8b 52 08          	mov    0x8(%rdx),%rdx
+    1a88:	83 c0 01             	add    $0x1,%eax
+    1a8b:	48 63 ce             	movslq %esi,%rcx
+    1a8e:	39 04 8c             	cmp    %eax,(%rsp,%rcx,4)
+    1a91:	7f f1                	jg     1a84 <phase_6+0x75>
+    1a93:	48 89 54 cc 20       	mov    %rdx,0x20(%rsp,%rcx,8)
+    1a98:	83 c6 01             	add    $0x1,%esi
+    1a9b:	83 fe 05             	cmp    $0x5,%esi
+    1a9e:	7f 0e                	jg     1aae <phase_6+0x9f>
+    1aa0:	b8 01 00 00 00       	mov    $0x1,%eax
+    1aa5:	48 8d 15 a4 65 00 00 	lea    0x65a4(%rip),%rdx        # 8050 <node1>
+    1aac:	eb dd                	jmp    1a8b <phase_6+0x7c>
+    1aae:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx
+    1ab3:	48 89 d9             	mov    %rbx,%rcx
+    1ab6:	b8 01 00 00 00       	mov    $0x1,%eax
+    1abb:	eb 12                	jmp    1acf <phase_6+0xc0>
+    1abd:	48 63 d0             	movslq %eax,%rdx
+    1ac0:	48 8b 54 d4 20       	mov    0x20(%rsp,%rdx,8),%rdx
+    1ac5:	48 89 51 08          	mov    %rdx,0x8(%rcx)
+    1ac9:	83 c0 01             	add    $0x1,%eax
+    1acc:	48 89 d1             	mov    %rdx,%rcx
+    1acf:	83 f8 05             	cmp    $0x5,%eax
+    1ad2:	7e e9                	jle    1abd <phase_6+0xae>
+    1ad4:	48 c7 41 08 00 00 00 	movq   $0x0,0x8(%rcx)
+    1adb:	00 
+    1adc:	bd 00 00 00 00       	mov    $0x0,%ebp
+    1ae1:	eb 07                	jmp    1aea <phase_6+0xdb>
+    1ae3:	48 8b 5b 08          	mov    0x8(%rbx),%rbx
+    1ae7:	83 c5 01             	add    $0x1,%ebp
+    1aea:	83 fd 04             	cmp    $0x4,%ebp
+    1aed:	7f 11                	jg     1b00 <phase_6+0xf1>
+    1aef:	48 8b 43 08          	mov    0x8(%rbx),%rax
+    1af3:	8b 00                	mov    (%rax),%eax
+    1af5:	39 03                	cmp    %eax,(%rbx)
+    1af7:	7e ea                	jle    1ae3 <phase_6+0xd4>
+    1af9:	e8 1c 05 00 00       	call   201a <explode_bomb>
+    1afe:	eb e3                	jmp    1ae3 <phase_6+0xd4>
+    1b00:	48 8b 44 24 58       	mov    0x58(%rsp),%rax # 金丝雀值检验
+    1b05:	64 48 2b 04 25 28 00 	sub    %fs:0x28,%rax 
+    1b0c:	00 00 
+    1b0e:	75 09                	jne    1b19 <phase_6+0x10a>
+    1b10:	48 83 c4 60          	add    $0x60,%rsp # %rsp恢复空间
+    1b14:	5b                   	pop    %rbx # %rbx恢复原值
+    1b15:	5d                   	pop    %rbp # %rbp恢复原值
+    1b16:	41 5c                	pop    %r12 # %r12恢复原值
+    1b18:	c3                   	ret # 退出
+    1b19:	e8 82 f7 ff ff       	call   12a0 <__stack_chk_fail@plt>
+```
+
+显然是长得可怕，笔者第二次做还是觉得这样。
+
+加上注释后，显得好一些了。难点就是在于循环多，以及常用的不常用的寄存器名称都来了。
+
+不过，有一些老朋友，比如``<read_six_numbers>``函数，就表示需要读进六个整数，并且将它们存放在``%rsp ~ %rsp+24``中。
