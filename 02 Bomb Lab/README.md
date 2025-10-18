@@ -265,8 +265,6 @@ end
 - ``cmpq,testq``以及条件跳转、条件传送以及switch语句，循环的用法。
 
 ## 开始动手！
-在介绍每个Phase的思路之前，我需要提醒你的是，
-
 首先，阅读``bomb.c``文件，以获取炸弹的基本信息。
 
 这里琴酒先生(原生Lab为邪恶博士，感谢Arthals学长给柯南粉们的修改)认为一个Phase的炸弹很容易被拆除，于是发来了有六个Phase的炸弹。
@@ -343,7 +341,9 @@ c
 ![alt text](./Picture%20Assets/2.png)
 
 ### Phase 2
-先阅读``Phase_2``的源码：
+注释掉``b phase_1``，便于调试。
+
+阅读``Phase_2``的源码：
 
 ```
 00000000000017a8 <phase_2>:
@@ -431,7 +431,8 @@ int sscanf(const char *str, const char *format, ...);
 结合前面提出的思路，得到答案：
 ``1 2 4 8 16 32``
 
-把它写到``psol.txt``的第二行，注释掉``b phase_2``，打开以下终端，运行以下指令：
+把它写到``psol.txt``的第二行，打开以下终端，运行以下指令：
+
 ```
 gdb bomb
 layout asm
@@ -444,3 +445,142 @@ c
 ![alt text](./Picture%20Assets/3.png)
 
 ### Phase 3
+注释掉``b phase_2``，便于调试。
+
+先阅读``Phase_3``的源码：
+```
+0000000000001819 <phase_3>:
+    1819:	f3 0f 1e fa          	endbr64 # 防ROP攻击
+    181d:	48 83 ec 18          	sub    $0x18,%rsp # %rsp分配24字节空间
+    1821:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax # %rax=金丝雀值
+    1828:	00 00 
+    182a:	48 89 44 24 08       	mov    %rax,0x8(%rsp) # 金丝雀值存放到%rsp+8处
+    182f:	31 c0                	xor    %eax,%eax # %eax置零
+    1831:	48 8d 4c 24 04       	lea    0x4(%rsp),%rcx # %rcx=%rsp+4
+    1836:	48 89 e2             	mov    %rsp,%rdx # %rdx=%rsp
+    1839:	48 8d 35 e0 2d 00 00 	lea    0x2de0(%rip),%rsi        # 4620 <transition_table+0x340> # 将内存中的某个值赋给%rsi，第二个参数
+    1840:	e8 fb fa ff ff       	call   1340 <__isoc99_sscanf@plt> # 输入
+    1845:	83 f8 01             	cmp    $0x1,%eax # 若%eax<=1,跳转爆炸
+    1848:	7e 1e                	jle    1868 <phase_3+0x4f>
+    184a:	83 3c 24 07          	cmpl   $0x7,(%rsp) # 若(%rsp)大于7，跳转爆炸
+    184e:	0f 87 8d 00 00 00    	ja     18e1 <phase_3+0xc8>
+    1854:	8b 04 24             	mov    (%rsp),%eax # %eax=(%rsp)
+    1857:	48 8d 15 42 2a 00 00 	lea    0x2a42(%rip),%rdx        # 42a0 <_IO_stdin_used+0x2a0> # 相对PC进行引用，存入%rdx
+    185e:	48 63 04 82          	movslq (%rdx,%rax,4),%rax %rax=%rdx偏移%rax*4位
+    1862:	48 01 d0             	add    %rdx,%rax # %rax+=%rdx
+    1865:	3e ff e0             	notrack jmp *%rax # 跳转
+    1868:	e8 ad 07 00 00       	call   201a <explode_bomb>
+    186d:	eb db                	jmp    184a <phase_3+0x31>
+    186f:	8b 44 24 04          	mov    0x4(%rsp),%eax # $eax=(%rsp+4)
+    1873:	05 63 01 00 00       	add    $0x163,%eax # %eax+=355
+    1878:	3d 46 01 00 00       	cmp    $0x146,%eax # 若%eax!=326
+    187d:	75 71                	jne    18f0 <phase_3+0xd7> # 爆炸
+    187f:	48 8b 44 24 08       	mov    0x8(%rsp),%rax 
+    1884:	64 48 2b 04 25 28 00 	sub    %fs:0x28,%rax # 检验金丝雀值是否变动
+    188b:	00 00 
+    188d:	75 68                	jne    18f7 <phase_3+0xde>
+    188f:	48 83 c4 18          	add    $0x18,%rsp # %rsp释放内存
+    1893:	c3                   	ret    # 返回
+    1894:	8b 44 24 04          	mov    0x4(%rsp),%eax # %eax=(%rsp+4)
+    1898:	05 53 01 00 00       	add    $0x153,%eax # %eax+=339
+    189d:	eb d9                	jmp    1878 <phase_3+0x5f> # 跳转
+    189f:	8b 44 24 04          	mov    0x4(%rsp),%eax # %eax=(%rsp+4)
+    18a3:	05 d1 02 00 00       	add    $0x2d1,%eax # %eax+=721
+    18a8:	eb ce                	jmp    1878 <phase_3+0x5f> # 跳转
+    18aa:	8b 44 24 04          	mov    0x4(%rsp),%eax # %eax=(%rsp+4)
+    18ae:	05 6a 01 00 00       	add    $0x16a,%eax # %eax+=362
+    18b3:	eb c3                	jmp    1878 <phase_3+0x5f> # 跳转
+    18b5:	8b 44 24 04          	mov    0x4(%rsp),%eax # %eax=(%rsp+4)
+    18b9:	05 0e 02 00 00       	add    $0x20e,%eax # %eax+=526
+    18be:	eb b8                	jmp    1878 <phase_3+0x5f> # 跳转
+    18c0:	8b 44 24 04          	mov    0x4(%rsp),%eax # %eax=(%rsp+4)
+    18c4:	05 e9 01 00 00       	add    $0x1e9,%eax # %eax+=489
+    18c9:	eb ad                	jmp    1878 <phase_3+0x5f> # 跳转
+    18cb:	8b 44 24 04          	mov    0x4(%rsp),%eax # %eax=(%rsp+4)
+    18cf:	05 a3 00 00 00       	add    $0xa3,%eax # %eax+=163
+    18d4:	eb a2                	jmp    1878 <phase_3+0x5f> # 跳转
+    18d6:	8b 44 24 04          	mov    0x4(%rsp),%eax # %eax=(%rsp+4)
+    18da:	05 d7 00 00 00       	add    $0xd7,%eax # %eax+=215
+    18df:	eb 97                	jmp    1878 <phase_3+0x5f> # 跳转
+    18e1:	e8 34 07 00 00       	call   201a <explode_bomb> # 
+    18e6:	bf ff ff ff ff       	mov    $0xffffffff,%edi
+    18eb:	e8 a0 fa ff ff       	call   1390 <exit@plt>
+    18f0:	e8 25 07 00 00       	call   201a <explode_bomb>
+    18f5:	eb 88                	jmp    187f <phase_3+0x66>
+    18f7:	e8 a4 f9 ff ff       	call   12a0 <__stack_chk_fail@plt>
+```
+
+乍一看很吓人，但是注意到这两句：
+
+```
+185e:	48 63 04 82          	movslq (%rdx,%rax,4),%rax
+1865:	3e ff e0             	notrack jmp *%rax
+```
+
+间接跳转吗，有点意思，在哪见过它？
+
+好像只在``switch``语句的章节见过，而且这两行的形式确实很像跳转表！
+
+可以观察到，在这个函数中仍然存在``sscanf``函数。
+
+运行以下指令，看看它输入了什么：
+```
+gdb bomb
+layout asm
+layout regs 
+b *(phase_3+39)
+c
+x/s $rsi
+```
+
+![alt text](./Picture%20Assets/4.png)
+
+程序显示，正好是两个整数，并且与``%rsp+8``存金丝雀值相符合！
+
+回想``phase_2``中讲过的``sscanf``函数逻辑，则第一个参数存放在``%rsp``，第二个参数存放在``%rsp+4``处。
+
+同时，观察汇编代码，发现把第一个参数与7比较，若大于7则跳转``default``分支，即爆炸。
+
+因此，我们不妨假设第一个参数为6，然后观察代码跳转到何处。
+
+在``psol.txt``的第三行写下以下参数：
+``6 142``
+
+然后，在跳转前打下断点，运行以下指令：
+
+```
+gdb bomb
+b *(phase_3+76)
+layout asm
+layout regs
+ni
+```
+
+发现它跳转到了``phase_3+178``，即代码中的``18cf``处：
+
+![alt text](./Picture%20Assets/5.png)
+
+再回到代码，看出它大概的C语言逻辑：
+```
+int result = x + 163;
+if(x != 326) bomb!
+```
+
+于是求得 ``x = 163``。
+
+刚发现笔者第一次做的时候用的第一参数不是``6``，于是有另一组答案``4,-200``。
+
+将新找出的答案写到``psol.txt``的第三行，运行以下指令：
+
+```
+gdb bomb
+layout asm
+layout regs
+c
+```
+
+得到以下输出，表明已经完成了``phase_3``：
+
+![alt text](./Picture%20Assets/6.png)
+
+### Phase 4
