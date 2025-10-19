@@ -1148,7 +1148,7 @@ Mua ha ha ha ha!
 
 ```
 Never could a muggle senses the magic. It’s purely beyond their ken. 
-Do they really thinkalohomora could open all the doors in the world?
+Do they really think alohomora could open all the doors in the world?
 No way! 
 Neither would they have any ideathat I further secured it with some abracadabra. 
 Mua ha ha ha! Just bother with these most impregnable spells ever!
