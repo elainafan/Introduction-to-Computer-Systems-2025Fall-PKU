@@ -96,14 +96,14 @@ layout regs
 
 第三种方法的原理是，在``gdb``中可以配置``.gdbinit``文件来设置``gdb``进入时的一些默认配置，这些指令每次运行时无需手动输入。
 
-下面开始配置``.gdbinit``文件，前提是已经解压了从AutoLab上的压缩包到
+下面开始配置``.gdbinit``文件，前提是已经解压了从AutoLab上下载的Bomb压缩包。
 
 在终端中运行以下代码：
 ```
 cd ~\bomb xx // 注意换成你的bomb所在地址
-touch .gdbinit //创建当前目录下的.gdbinit文件
-mkdir -p ~/.config/gdb //创建 ./config/gdb 文件夹
-echo "set auto-load safe-path" > ~/.config/gdb/gdbinit //允许gdb预加载根目录下所有的文件
+touch .gdbinit // 创建当前目录下的.gdbinit文件
+mkdir -p ~/.config/gdb // 创建 ./config/gdb 文件夹
+echo "set auto-load safe-path" > ~/.config/gdb/gdbinit // 允许gdb预加载根目录下所有的文件
 ```
 
 为了安全化炸弹，知己知彼，得先了解炸弹的爆炸逻辑。
@@ -338,7 +338,7 @@ layout regs
 c
 ```
 
-得到以下输出，表示已经完成了phase 1：
+得到以下输出，表示已经完成了``phase 1``：
 
 ![alt text](./Picture%20Assets/2.png)
 
@@ -390,9 +390,9 @@ c
 
 ```
 int a[6];
-if(a[0]!=1) bomb!
-for(int i=1;i<=5;i++){
-    if(a[i]!=2*a[i-1]) bomb!
+if(a[0] != 1) bomb!
+for(int i = 1;i <= 5;i++){
+    if(a[i] != 2 * a[i - 1]) bomb!
 }
 ```
 
@@ -447,7 +447,7 @@ layout regs
 c
 ```
 
-得到以下输出，表示已经完成了``phase_2``：
+得到以下输出，表示已经完成了``phase 2``：
 
 ![alt text](./Picture%20Assets/3.png)
 
@@ -589,7 +589,7 @@ layout regs
 c
 ```
 
-得到以下输出，表示已经完成了``phase_3``：
+得到以下输出，表示已经完成了``phase 3``：
 
 ![alt text](./Picture%20Assets/6.png)
 
@@ -685,9 +685,9 @@ c
 ```
 int func4(int x, int y, int z){
     int res = z - y;
-    res = res >> 31; (此处为逻辑右移)
+    res = res >> 31; // 此处为逻辑右移
     res += (z - y);
-    res = res >> 1; (此处为算术右移)
+    res = res >> 1; // 此处为算术右移
     res += y;
     if(x < res){
         return 2 * func4(x, y, res - 1);
@@ -714,7 +714,7 @@ layout regs
 c
 ```
 
-得到以下输出，表示已经完成了``phase_4``：
+得到以下输出，表示已经完成了``phase 4``：
 
 ![alt text](./Picture%20Assets/7.png)
 
@@ -810,7 +810,7 @@ layout regs
 c
 ```
 
-得到以下输出，表示已经完成了``phase_5``:
+得到以下输出，表示已经完成了``phase 5``:
 
 ![alt text](./Picture%20Assets/9.png)
 
@@ -990,14 +990,14 @@ c
 ```
 for(int ebp = 0;ebp <= 5;ebp++){
     rax = ebp;
-    eax = rsp + rax*4; # 即eax = 第ebp个参数
+    eax = rsp + rax*4; // 即eax = 第ebp个参数
     eax--;
     if(eax > 5) boom!
     for(int ebx = rbp + 1;ebx <= 5; ebx++){
         rax = ebp;
         rdx = ebx;
-        edi = rsp + 4 * rdx; # 也就是将第(ebp+1)个参数加载到edi
-        if(edi == rsp + rax * 4) boom! # 若第ebp个参数等于第(ebx)个参数，爆炸
+        edi = rsp + 4 * rdx; // 也就是将第(ebp+1)个参数加载到edi
+        if(edi == rsp + rax * 4) boom! // 若第ebp个参数等于第(ebx)个参数，爆炸
         ebx++;
     }
 }
@@ -1103,7 +1103,7 @@ for(int ebp=0;ebp<=4;ebp++){
 }
 ```
 
-再次由于``x86-64``架构的``小端法``存储特点，它的大致含义是，如果``node[i].val > node[i+1].val``，就发生爆炸。
+再次由于``x86-64``架构的``小端法``存储特点，得到它的大致含义，如果``node[i].val > node[i+1].val``，就发生爆炸。
 
 结合上述所有条件，得出答案为：
 
@@ -1130,7 +1130,7 @@ CCDG
 I love elaina.
 ```
 
-得到以下输出，表示已经完成了``phase_6``:
+得到以下输出，表示已经完成了``phase 6``:
 
 ![alt text](./Picture%20Assets/12.png)
 
