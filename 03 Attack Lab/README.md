@@ -63,8 +63,10 @@ ROP攻击，全称 **Return-oriented Programming Attack**，即不注入任何�
 在这之外，有的phase还多了几步，需要先编辑好想进行攻击的汇编代码，再将其转化为十六进制编码gadget，找出gadget地址，将它编写进十六进制文件。
 
 以下列代码为例：
+
 ```
-gcc -c p5.s && objdump -d p5.o > p5.byte # 将p5.s编译并反汇编为p5.byte文件(带十六进制编码的汇编码文件)
+gcc -c p2.s # 编译
+objdump -d p2.o > p2.byte # 翻译为字节码
 ```
 
 最后，笔者需要提醒的是，无论何时都不要在编写的16进制文件中出现``0x0a``，这会使``get``函数中断输入，从而导致缓冲区代码注入无法成功完成。
