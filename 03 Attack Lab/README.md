@@ -123,7 +123,7 @@ objdump -d ctarget > ctarget.s
 
 ![](./Picture%20Assets/5.png)
 
-即我们栈的结构为
+画出栈的结构为
 
 ```
 --------------- 64
@@ -293,7 +293,7 @@ void touch3(char *sval)
 
 由于``touch3``是通过覆盖``getbuf``的返回地址得来的，因此其栈帧和``hexmatch``的栈帧紧接着在缓冲区下方，而猜测当``s``被随机得过大，就有可能覆写原先存在缓冲区的东西。
 
-不过，好消息是，``hexmatch``中分配内存的语句为``add    $0xffffffffffffff80,%rsp``，即``rsp-=128``，而还存在``touch``的栈帧，猜测在原本的缓冲区中，有一些它``无法reach``的东西。
+不过，好消息是，``hexmatch``中分配内存的语句为``add $0xffffffffffffff80,%rsp``，即``rsp-=128``，而还存在``touch``的栈帧，猜测在原本的缓冲区中，有一些它``无法reach``的东西。
 
 按照phase 2的思路，找出touch3的地址``0x401e90``编写以下代码：
 
