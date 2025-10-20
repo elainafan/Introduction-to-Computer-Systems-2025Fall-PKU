@@ -130,7 +130,7 @@ Data Lab对应教材第二章《信息的表示与处理》，旨在加深同学
 $$ \sim ((\sim x) \And (\sim y))=x \mid y$$
 
 因此得到以下代码：
-```
+```c
 int bitOr(int x, int y) {
   return ~((~x)&(~y));
 }
@@ -146,7 +146,7 @@ int bitOr(int x, int y) {
 要将这个数的高位设置为1，自然会联想到用``(1<<31)``进行算术右移。
 
 答案呼之欲出：
-```
+```c
 int upperBits(int n) {
     return (1<<31)>>(n-1);
 }
@@ -160,7 +160,7 @@ int upperBits(int n) {
 产生一个掩码``mask``，若``n=0``时其为0，反之为1。
 
 然后取``mask``的相反数，左移``(32-n)``位，就能得到答案。
-```
+```c
 int upperBits(int n) {
   int mask=!!n;
   return (~mask+1)<<(33+~n);
@@ -197,7 +197,7 @@ int upperBits(int n) {
 相似地，对模任意二的次幂的加法，都可以采取相似的策略。
 
 分治得到以下代码：
-```
+```c
 int fullAdd(int x, int y) {
   int sum_1=x^y,c_1=(x&y)<<1;
   int sum_2=sum_1^c_1,c_2=(sum_1&c_1)<<1;
@@ -225,7 +225,7 @@ int fullAdd(int x, int y) {
 然后你可能会感到疑惑，取出原来的低位简单，由于整数运算是算术右移，而需要的是逻辑右移啊？
 
 没关系，笔者从24秋的Data Lab中拷贝了逻辑右移的一份模板，可以直接使用（这个是24秋的puzzle）。
-```
+```c
 int logicalShift(int x, int n) {
    // 对Tmin（最高位为1）执行同样的右移操作，然后左移一位取反即得所需掩码
    int mask = ~(1 << 31 >> n << 1);
@@ -234,7 +234,7 @@ int logicalShift(int x, int n) {
 ```
 
 于是，结合我们的上述分析，得到以下代码
-```
+```c
 int rotateLeft(int x, int n) {
   int temp=x<<n;
   int mask=~(1<<31>>(33+~n)<<1);
@@ -258,7 +258,7 @@ int rotateLeft(int x, int n) {
 用相同的视角来看这道题，结合分治的思想，我们可以不断对``x``的位表示进行折叠和异或，从而通过最后的结果是否为1来判断。
 
 于是得到以下代码：
-```
+```c
 int bitParity(int x) {
   x=x^(x>>16);
   x=x^(x>>8);
@@ -299,7 +299,7 @@ int bitParity(int x) {
 4.将相邻八个位数看成一块，交换相邻八个块的数码。
 
 可以写出以下代码：
-```
+```c
 int palindrome(int x) {
   int temp_1=(x>>16);
   int temp_2=x&0x0000FFFF;
@@ -320,7 +320,7 @@ int palindrome(int x) {
 参见《深入理解计算机系统（第三版）》66页网络旁注，提到``-x = ~x + 1``。
 
 于是得到以下代码：
-```
+```c
 int negate(int x) {
   return ~x+1;
 }
@@ -339,14 +339,14 @@ int negate(int x) {
 这时怎么办？当然是采用特判了！即如何合理转化``if(x==TMAX) return 0``
 
 还记得上文提到的``用!!n将非零数字转化为1，零不变``这条结论吗，没错，可以写出以下代码。
-```
+```c
 int TMAX=~(1<<31);
 int if_TMAX=!!(x^TMAX);
 ```
 如果``if_TMAX = 0``，直接返回``0``，否则返回``!((x+1)^y)``。
 
 于是得到以下代码：
-```
+```c
 int oneMoreThan(int x, int y) {
   /* 反例是TMIN,TMAX*/
   int tmax=~(1<<31);
@@ -371,7 +371,7 @@ int oneMoreThan(int x, int y) {
 同时，对于题目中``考虑溢出情况``，不必做额外处理，因为``int``类型会自动计算溢出结果。
 
 于是，得到以下代码：
-```
+```c
 int ezThreeFourths(int x) {
   int sum=(x<<1)+x;
   int bias=(sum>>31)&3;
@@ -392,7 +392,7 @@ int ezThreeFourths(int x) {
 - 若``x, y``同号，则``x < y``转化为``x - y + 1 <= 0``，即``x + ~y <=0``，于是转化为``x + ~y``的符号位判断。  
 
 基于以上思路，得到以下代码：
-```
+```c
 int isLess(int x, int y) {
   int x_is_equal_to_y=x^y;
   int x_sign=(x>>31)&1,y_sign=(y>>31)&1;
@@ -431,7 +431,7 @@ int isLess(int x, int y) {
 若``x_sign = -1``，取``~x_sign = 0``，此时与``TMIN``异或得``TMIN``。
 
 于是得到以下代码：
-```
+```c
 int satMul2(int x) {
   int sum=x+x;
   int if_overflow=(x^sum)>>31;
@@ -470,7 +470,7 @@ int satMul2(int x) {
 这段思路可能不是同学所有思路里最简洁的，但是笔者在这问上确实燃尽了，花的时间应该有3h左右。
 
 基于以上思路，得到以下代码：
-```
+```c
 int modThree(int x) {
   int x_sign=(x>>31)&1;
   int tmin=1<<31;
@@ -520,17 +520,17 @@ int modThree(int x) {
 - 对于一般的规格化数，直接将其指数位减1即可。
 
 基于以上思路，得到以下代码：
-```
+```c
 unsigned float_half(unsigned uf) {
-  int x_sign=uf&(0x80000000); # 取符号位
-  int e_mask=0x7f800000; # 指数位补码
-  int x_e=uf&e_mask; # 取指数位
-  int x_m=uf&(0x007fffff); # 尾数位补码
-  int if_double_one=!((uf&3)^3); # 是否需要进位
-  if(x_e==e_mask) return uf; # 特殊情况直接返回
-  if(!x_e) return x_sign | ((x_m>>1)+if_double_one); # 非规格化数的情况
-  if((x_e>>23)==1) return x_sign | (((x_e | x_m)>>1)+if_double_one); # 指数位为1的情况
-  return x_sign | ((((x_e>>23)-1)<<23)&e_mask) | x_m; # 一般化情况
+  int x_sign=uf&(0x80000000); // 取符号位
+  int e_mask=0x7f800000; // 指数位补码
+  int x_e=uf&e_mask; // 取指数位
+  int x_m=uf&(0x007fffff); // 尾数位补码
+  int if_double_one=!((uf&3)^3); // 是否需要进位
+  if(x_e==e_mask) return uf; // 特殊情况直接返回
+  if(!x_e) return x_sign | ((x_m>>1)+if_double_one); // 非规格化数的情况
+  if((x_e>>23)==1) return x_sign | (((x_e | x_m)>>1)+if_double_one); // 指数位为1的情况
+  return x_sign | ((((x_e>>23)-1)<<23)&e_mask) | x_m; // 一般化情况
 }
 ```
 
@@ -557,21 +557,21 @@ unsigned float_half(unsigned uf) {
 最后，将符号位、指数位和尾数位拼接起来。
 
 基于上述思路，得到以下代码：
-```
+```c
 unsigned float_i2f(int x) {
   unsigned x_sign=(x>>31)&1,x_e=31,x_m,is_add,bias=0x7F,ux_e,mask=0x7FFFFF;
   if(x==0) return 0;
   if(x==(1<<31)) return 0xCF000000;
-  if(x_sign) x=-x; # 特判
-  while(!(x>>x_e)) x_e--; # 找到有效位
-  ux_e=x_e+bias; # 得到指数位
-  x=x<<(31-x_e); # 取出x的有效位
-  x_m=(x>>8)&mask; # 去掉规格化数隐含的前导1
-  is_add=x&0xFF; # 判断是否要进位
+  if(x_sign) x=-x; // 特判
+  while(!(x>>x_e)) x_e--; // 找到有效位
+  ux_e=x_e+bias; // 得到指数位
+  x=x<<(31-x_e); // 取出x的有效位
+  x_m=(x>>8)&mask; // 去掉规格化数隐含的前导1
+  is_add=x&0xFF; // 判断是否要进位
   x_m+=((is_add>0x80) || ((is_add==0x80)&&(x_m&1)));
   if(x_m>>23){
     x_m=x_m&mask;ux_e++;
-  } # 小数位溢出
+  } // 小数位溢出
   return (x_sign<<31) | (ux_e<<23) | x_m;
 }
 ```
@@ -599,7 +599,7 @@ unsigned float_i2f(int x) {
 最后，对符号位进行判断。
 
 基于以上思路，得到以下代码：
-```
+```c
 int float64_f2i(unsigned uf1, unsigned uf2) {
   unsigned x_sign=(uf2)>>31;
   int x_exp=(((uf2)>>20)&0x7FF)-1023;
@@ -636,12 +636,12 @@ int float64_f2i(unsigned uf1, unsigned uf2) {
 - 当``2.0 ^ x``大于``float``类型的最大规格化数时，即 $2^{2^{8}-2-\mathrm{bias}} = 2^{127}$ ，返回``INF``。
 
 基于上述思路，得出以下代码：
-```
+```c
 unsigned float_pwr2(int x) {
-  if(x<-149) return 0; # 太小
-  else if(x<-126) return 1<<(x+149); # 非规格化数
-  else if(x<=127) return (x+127)<<23; # 规格化数
-  return 0x7f800000; # 太大
+  if(x<-149) return 0; // 太小
+  else if(x<-126) return 1<<(x+149); // 非规格化数
+  else if(x<=127) return (x+127)<<23; // 规格化数
+  return 0x7f800000; // 太大
 }
 ```
 注：该代码无法通过本地``./bddcheck/check.pl``测试，但是在``Autolab``上满分，原因未知。
