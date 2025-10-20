@@ -68,6 +68,7 @@ delete breakpoints 1  # 删除第一个断点，可以简写为 d 1
   - 当使用``x/b``、``x/h``、``x/w``、``x/g``时，单位会保留对应改变，知道你再次使用这些命令。
 
 在这个Lab和接下来的Attack Lab中，打开终端，操作通常是
+
 ```
 gdb bomb
 b phase_x // 这条如果配置了.gdbinit文件就无须再输入
@@ -87,7 +88,7 @@ layout regs
 - 找到相关代码，再利用``gdb``工具为危险函数或者危险指令设置断点，并对于断点处进行编程，跳过危险指令或者修改寄存器的值来控制条件跳转，使得炸弹不会爆炸。
 
 关于第一种方法，笔者要在此做几点说明：
-- 如果使用断网方法，~~如果是使用CLAB的云服务器的同学，那就别想了~~。使用WSL或者虚拟机/双系统的同学，可能可以实现，
+- 如果使用断网方法，~~如果是使用CLAB的云服务器的同学，那就别想了~~。使用WSL或者虚拟机/双系统的同学，可能可以实现。
 - 根据笔者查询的结果，似乎是能在CMU的原生Lab上实现，但是不保证PKU的魔改Lab不会在重新联网后向AutoLab网站发送爆炸信号。
 
 相对地，第二种方法比第三种难度的操作难度大得多(其实是笔者太菜不会)，所以，何乐而不为呢？
@@ -99,6 +100,7 @@ layout regs
 下面开始配置``.gdbinit``文件，前提是已经解压了从AutoLab上下载的Bomb压缩包。
 
 在终端中运行以下代码：
+
 ```
 cd ~\bomb xx // 注意换成你的bomb所在地址
 touch .gdbinit // 创建当前目录下的.gdbinit文件
@@ -109,7 +111,7 @@ echo "set auto-load safe-path" > ~/.config/gdb/gdbinit // 允许gdb预加载根�
 为了安全化炸弹，知己知彼，得先了解炸弹的爆炸逻辑。
 以``phase_1``为例，如下是笔者炸弹中的汇编代码：
 
-```
+```asm
 0000000000001784 <phase_1>:
     1784:	f3 0f 1e fa          	endbr64
     1788:	48 83 ec 08          	sub    $0x8,%rsp
@@ -125,7 +127,8 @@ echo "set auto-load safe-path" > ~/.config/gdb/gdbinit // 允许gdb预加载根�
 可以大致发现，它在调用了``strings_not_equal``函数后，测试返回值``%eax``，若其为真则不进行条件跳转，若为假则跳转到``17a1``处调用``explode_bomb``函数。
 
 再查询``explode_bomb``函数的源码：
-```
+
+```asm
 000000000000201a <explode_bomb>:
     201a:	f3 0f 1e fa          	endbr64
     201e:	50                   	push   %rax
@@ -157,11 +160,13 @@ echo "set auto-load safe-path" > ~/.config/gdb/gdbinit // 允许gdb预加载根�
     2096:	bf 08 00 00 00       	mov    $0x8,%edi
     209b:	e8 f0 f2 ff ff       	call   1390 <exit@plt>
 ```
+
 可以观察到，一直值得注意的点是，它会调用``send_msg``函数，而这个函数因为源码较长就不在下面放出了。顾名思义，它是向远程评分系统传输信号的函数。
 
 于是，只需在``explode_bomb``函数中设置断点，直接跳转使它不触发``send_msg``函数，并且能成功调用``puts``函数，这样能在不向远程传输爆炸信号的情况下打印出爆炸信息。
 
 然后，打开``.gdbinit``文件，输入以下内容：
+
 ```
 # ./gdbinit
 # 设置默认文件输入，这样我们不必每次手动输入答案
@@ -198,7 +203,8 @@ r
 由于每位同学的炸弹都不一样，因此知晓如何设置上面代码中的``xx``偏移量，对于每位同学来说都是十分重要的。
 
 下面以笔者的炸弹代码为例：
-```
+
+```asm
 000000000000201a <explode_bomb>:
     201a:	f3 0f 1e fa          	endbr64
     201e:	50                   	push   %rax
@@ -236,7 +242,8 @@ r
 然后，执行跳转操作，使函数强制跳转到``0x209b``处，即``call <exit>``指令，强制退出。它相对于``explode_bomb``的偏移量为``0x81``。
 
 于是，得到了笔者炸弹代码的安全化处理代码，即
-```
+
+```bash
 b *(explode_bomb+0x44)
 command
 j *(explode_bomb+0x81)
@@ -247,6 +254,7 @@ r
 之后，就可以在本地安全运行代码了。
 
 值得一提的是，如果需要在DDL后再运行炸弹文件，比如笔者想在其中后完成Secret Phase，此时需要再``.gdbinit``中加上以上代码以跳过校验函数，否则会报错。
+
 ```
 # 为校验函数设置断点
 b phase_defused
@@ -270,7 +278,8 @@ end
 这里琴酒先生(原生Lab为邪恶博士，感谢Arthals学长给柯南粉们的修改)认为一个Phase的炸弹很容易被拆除，于是发来了有六个Phase的炸弹。
 
 在其中，有类似以下代码：
-```
+
+```c
 /* Hmm...  Six phases must be more secure than one phase! */
     input = read_line();             /* Get input                   */
     phase_1(input);                  /* Run the phase               */
@@ -288,7 +297,7 @@ end
 ### Phase 1
 先阅读``phase_1``的源码：
 
-```
+```asm
 0000000000001784 <phase_1>:
     1784:	f3 0f 1e fa          	endbr64 # 此Lab中无关，用于防止ROP攻击(下个Lab的重点)
     1788:	48 83 ec 08          	sub    $0x8,%rsp # %rsp分配8字节栈空间
@@ -323,7 +332,7 @@ x/s $rsi
 
 得到了以下输出：
 
-![alt text](./Picture%20Assets/1.png)
+![](1.png)
 
 得到答案为``A secret makes a woman a woman``。
 
@@ -340,14 +349,14 @@ c
 
 得到以下输出，表示已经完成了``phase 1``：
 
-![alt text](./Picture%20Assets/2.png)
+![](2.png)
 
 ### Phase 2
 注释掉``b phase_1``，便于调试。
 
 先阅读``Phase_2``的源码：
 
-```
+```asm
 00000000000017a8 <phase_2>:
     17a8:	f3 0f 1e fa          	endbr64 # 防ROP攻击
     17ac:	53                   	push   %rbx # %rbx进栈
@@ -388,7 +397,7 @@ c
 
 于是，基本弄懂了这个函数的逻辑，用C代码写来就是：
 
-```
+```c
 int a[6];
 if(a[0] != 1) bomb!
 for(int i = 1;i <= 5;i++){
@@ -399,7 +408,7 @@ for(int i = 1;i <= 5;i++){
 其实``%rsp+24``存放金丝雀值已经很清楚了，输入六个``int``类型变量，然后从栈顶开始往高地址存储，刚好是24个字节。
 以防万一，阅读``read_six_numbers``函数，看看这六个数字的存储顺序。
 
-```
+```asm
 00000000000020a0 <read_six_numbers>:
     20a0:	f3 0f 1e fa          	endbr64 # 防ROP攻击
     20a4:	48 83 ec 08          	sub    $0x8,%rsp # 栈顶分配8字节空间
@@ -449,14 +458,14 @@ c
 
 得到以下输出，表示已经完成了``phase 2``：
 
-![alt text](./Picture%20Assets/3.png)
+![](3.png)
 
 ### Phase 3
 注释掉``b phase_2``，便于调试。
 
 先阅读``Phase_3``的源码：
 
-```
+```asm
 0000000000001819 <phase_3>:
     1819:	f3 0f 1e fa          	endbr64 # 防ROP攻击
     181d:	48 83 ec 18          	sub    $0x18,%rsp # %rsp分配24字节空间
@@ -520,7 +529,7 @@ c
 
 乍一看很吓人，但是注意到这两句：
 
-```
+```asm
 185e:	48 63 04 82          	movslq (%rdx,%rax,4),%rax
 1865:	3e ff e0             	notrack jmp *%rax
 ```
@@ -542,7 +551,7 @@ c
 x/s $rsi
 ```
 
-![alt text](./Picture%20Assets/4.png)
+![](4.png)
 
 程序显示，正好是两个整数，并且与``%rsp+8``存金丝雀值相符合！
 
@@ -568,10 +577,11 @@ ni
 
 发现它跳转到了``phase_3+178``，即代码中的``18cf``处：
 
-![alt text](./Picture%20Assets/5.png)
+![](5.png)
 
 再回到代码，看出它大概的C语言逻辑：
-```
+
+```c
 int result = x + 163;
 if(x != 326) bomb!
 ```
@@ -591,14 +601,14 @@ c
 
 得到以下输出，表示已经完成了``phase 3``：
 
-![alt text](./Picture%20Assets/6.png)
+![](6.png)
 
 ### Phase 4
 注释掉``b phase_3``，便于调试。
 
 先阅读``phase_4``的源码：
 
-```
+```asm
 000000000000193d <phase_4>:
     193d:	f3 0f 1e fa          	endbr64 # 防ROP攻击
     1941:	48 83 ec 18          	sub    $0x18,%rsp # %rsp分配24个字节空间
@@ -640,7 +650,7 @@ c
 
 同时，注意到以下语句：
 
-```
+```asm
 1991:	83 f8 06             	cmp    $0x6,%eax # 若%eax!=0，跳转爆炸
 1994:	75 07                	jne    199d <phase_4+0x60> 
 1996:	83 7c 24 04 06       	cmpl   $0x6,0x4(%rsp) # 若(%rsp+4)!=6,不跳转导致爆炸
@@ -653,7 +663,7 @@ c
 
 传入的参数为``%edi=(%rsp),%esi=0,%edx=14``
 
-```
+```asm
 00000000000018fc <func4>:
     18fc:	f3 0f 1e fa          	endbr64 # 防ROP攻击
     1900:	48 83 ec 08          	sub    $0x8,%rsp # %rsp分配8个字节空间
@@ -682,7 +692,7 @@ c
 
 阅读这段代码，大致能给出以下递归结构：
 
-```
+```c
 int func4(int x, int y, int z){
     int res = z - y;
     res = res >> 31; // 此处为逻辑右移
@@ -716,14 +726,14 @@ c
 
 得到以下输出，表示已经完成了``phase 4``：
 
-![alt text](./Picture%20Assets/7.png)
+![](7.png)
 
 ### Phase 5
 注释掉``b phase_5``，便于调试。
 
 先阅读``phase_5``的源码：
 
-```
+```asm
 00000000000019bc <phase_5>:
     19bc:	f3 0f 1e fa          	endbr64 # 防ROP攻击
     19c0:	53                   	push   %rbx # %rbx进栈
@@ -754,7 +764,7 @@ c
 
 给代码打上注释后，会发现此题并没有前面所用的``sscanf``函数，但是通过下面这两行判断应该输入一个长度为4的字符串：
 
-```
+```asm
 19c4:	e8 24 03 00 00       	call   1ced <string_length> # 调用<string_length>函数
 19c9:	83 f8 04             	cmp    $0x4,%eax # 如果%eax不为4则跳转爆炸
 19cc:	75 0c                	jne    19da <phase_5+0x1e>
@@ -768,7 +778,7 @@ c
 
 此时要研究的就是，乘上去的到底是什么？
 
-```
+```asm
 19e1:	48 63 d0             	movslq %eax,%rdx # %rdx=%eax
 19e4:	0f b6 14 13          	movzbl (%rbx,%rdx,1),%edx # %edx=%rbx+%rdx
 19e8:	83 e2 07             	and    $0x7,%edx # %edx=%edx&7
@@ -793,7 +803,7 @@ x/8d $rsi
 
 得到以下结果：
 
-![alt text](./Picture%20Assets/8.png)
+![](8.png)
 
 也就得到了，这个数组的各个元素的值。
 
@@ -812,14 +822,14 @@ c
 
 得到以下输出，表示已经完成了``phase 5``:
 
-![alt text](./Picture%20Assets/9.png)
+![](9.png)
 
 ### Phase 6
 注释掉``b phase_6``，便于调试。
 
 先阅读``phase_6``的源码：
 
-```
+```asm
 0000000000001a0f <phase_6>:
     1a0f:	f3 0f 1e fa          	endbr64 # 防ROP攻击
     1a13:	41 54                	push   %r12 # %r12进栈
@@ -916,7 +926,7 @@ c
 
 去掉保存金丝雀值等等无用部分，得到以下核心代码：
 
-```
+```asm
     1a33:	bd 00 00 00 00       	mov    $0x0,%ebp # %ebp=0
     1a38:	eb 27                	jmp    1a61 <phase_6+0x52> # 跳转
     1a3a:	e8 db 05 00 00       	call   201a <explode_bomb>
@@ -987,7 +997,7 @@ c
 
 函数首先进入一个循环，写成C代码大概如下
 
-```
+```c
 for(int ebp = 0;ebp <= 5;ebp++){
     rax = ebp;
     eax = rsp + rax*4; // 即eax = 第ebp个参数
@@ -1007,7 +1017,7 @@ for(int ebp = 0;ebp <= 5;ebp++){
 
 接着往下看，函数跳出循环到``1a7d``处。写成C代码大概如下：
 
-```
+```c
 for(int esi=0;esi<=5;esi++){
     eax=1;
     rdx=?;
@@ -1040,13 +1050,13 @@ x/24x $rdx // 如上文分析，打印96个字节的值。
 
 得到以下输出：
 
-![alt text](./Picture%20Assets/10.png)
+![](10.png)
 
 一个令人疑惑的点是，为什么只有五个节点？
 
 分析每个节点的结构，由于``x86-64``的体系结构中，数据按照``小端法``存储，因此每个节点的结构大致为
 
-```
+```c
 struct node{
     int val;
     int key;
@@ -1058,11 +1068,11 @@ struct node{
 
 运行``x/4x 0x000055555555``，得到以下输出：
 
-![alt text](./Picture%20Assets/11.png)
+![](11.png)
 
 于是就能确认这个数据结构是链表，同时可以补全上述代码：
 
-```
+```c
 for(int esi = 0;esi <= 5;esi++){
     eax = 1;
     rdx = node1;
@@ -1078,7 +1088,7 @@ for(int esi = 0;esi <= 5;esi++){
 
 再往下看，写出大概的C代码：
 
-```
+```c
 rbx = (rsp + 32);
 rcx = rbx;
 for(int eax = 1;eax <= 5;eax++){
@@ -1093,7 +1103,7 @@ for(int eax = 1;eax <= 5;eax++){
 
 最后，看下最后一个循环，写出大概的C代码：
 
-```
+```c
 (rcx+8)=0;
 for(int ebp=0;ebp<=4;ebp++){
     rax = (rbx + 8);
@@ -1132,7 +1142,7 @@ I love elaina.
 
 得到以下输出，表示已经完成了``phase 6``:
 
-![alt text](./Picture%20Assets/12.png)
+![](12.png)
 
 此处因为给``phase_defused``打了断点，因此无法显示最后的成功语句，DDL内是可以的。
 
