@@ -1,0 +1,71 @@
+	.pos 0
+	irmovq	stack,%rsp
+	call main
+	halt
+
+	.align 8
+array:
+	.quad 0xbca
+	.quad 0xcba
+	.quad 0xacb
+	.quad 0xcab
+	.quad 0xabc
+	.quad 0xbac
+	
+################################################################################
+# You may want to modify this portion
+# data:%rdi,count:%rsi,last:%rsi,常数8:%r13,i:%rcx
+
+bubble_a:
+	addq %rsi, %rsi
+	addq %rsi, %rsi
+	addq %rsi, %rsi # %rsi*=8
+	addq %rdi, %rsi # %rdi需要保存以判断条件
+	irmovq $8, %r13
+	jmp test1
+	
+
+loop1:
+	rrmovq %rdi, %rcx
+	subq %r13, %rsi
+	jmp test2
+
+loop2:
+	mrmovq (%rcx), %r10
+	mrmovq 8(%rcx), %r11
+	rrmovq %rcx, %rbx
+	addq %r13, %rcx
+	subq %r10, %r11
+	jl check
+	jmp test2
+
+check:
+	mrmovq 8(%rbx), %r12
+	rmmovq %r10, 8(%rbx)
+	rmmovq %r12, (%rbx)
+	jmp test2
+
+test1:
+	rrmovq %rsi, %rdx
+	subq %rdi, %rdx
+	jle done
+	jmp loop1
+
+test2:
+	rrmovq %rcx, %r8
+	rrmovq %rsi, %r9
+	subq %r8, %r9
+	jle test1
+	jmp loop2
+
+main:
+	irmovq array, %rdi
+	irmovq $6, %rsi
+	call bubble_a
+	ret
+
+done:
+	ret
+
+	.pos 0x200
+stack:

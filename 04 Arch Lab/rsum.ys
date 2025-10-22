@@ -1,0 +1,40 @@
+# As you've got familiar with Y86 after writting your first y86 code
+# (bubble.ys), this code is left blank for you :)
+    .pos 0
+    irmovq stack, %rsp # Set up stack pointer
+    call main # Execute main program
+    halt # Terminate program
+
+    .align 8 # 测试用链表
+ele1:
+    .quad 0x00d
+    .quad ele2
+ele2:
+    .quad 0x0e0
+    .quad ele3
+ele3:
+    .quad 0xf00
+    .quad 0
+
+main:
+    irmovq ele1, %rdi
+    call rsum_list
+    ret
+
+rsum_list:
+    andq %rdi, %rdi
+    je done
+    mrmovq (%rdi), %rsi
+    pushq %rsi # 临时变量压栈保存
+    mrmovq 8(%rdi), %rdi
+    call rsum_list
+    popq %rdx
+    addq %rdx, %rax
+    ret
+
+done:
+    xorq %rax, %rax # 返回值置零
+    ret
+
+    .pos 0x200
+stack:
