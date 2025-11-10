@@ -1187,7 +1187,7 @@ Sort4:
 
 编写这部分代码如下：
 
-```
+```asm
 Back9:
 	mrmovq 64(%rdi), %r8
 	rmmovq %r8, 64(%rsi)
