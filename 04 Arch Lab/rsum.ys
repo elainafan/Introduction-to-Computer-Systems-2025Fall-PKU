@@ -17,8 +17,8 @@ ele3:
     .quad 0
 
 main:
-    irmovq ele1, %rdi
-    call rsum_list
+    irmovq ele1, %rdi 
+    call rsum_list # 调用rsum_list函数
     ret
 
 rsum_list:
@@ -33,7 +33,6 @@ rsum_list:
     ret
 
 done:
-    xorq %rax, %rax # 返回值置零
     ret
 
     .pos 0x200

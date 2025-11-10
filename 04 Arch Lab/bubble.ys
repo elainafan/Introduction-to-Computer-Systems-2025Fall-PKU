@@ -21,40 +21,40 @@ bubble_a:
 	addq %rsi, %rsi
 	addq %rsi, %rsi # %rsi*=8
 	addq %rdi, %rsi # %rdi需要保存以判断条件
-	irmovq $8, %r13
+	irmovq $8, %r13 # 设置常数8.便于遍历
 	jmp test1
 	
 
 loop1:
-	rrmovq %rdi, %rcx
-	subq %r13, %rsi
+	rrmovq %rdi, %rcx # i=data;
+	subq %r13, %rsi # last--;
 	jmp test2
 
 loop2:
-	mrmovq (%rcx), %r10
-	mrmovq 8(%rcx), %r11
-	rrmovq %rcx, %rbx
-	addq %r13, %rcx
-	subq %r10, %r11
+	mrmovq (%rcx), %r10 # %r10=*i
+	mrmovq 8(%rcx), %r11 # %r11=*(i+1)
+	rrmovq %rcx, %rbx # %rbx=i
+	addq %r13, %rcx # i++
+	subq %r10, %r11 # if *(i+1)<*i jmp to swap
 	jl check
 	jmp test2
 
 check:
-	mrmovq 8(%rbx), %r12
+	mrmovq 8(%rbx), %r12 
 	rmmovq %r10, 8(%rbx)
 	rmmovq %r12, (%rbx)
-	jmp test2
+	jmp test2 # swap
 
 test1:
-	rrmovq %rsi, %rdx
-	subq %rdi, %rdx
+	rrmovq %rsi, %rdx 
+	subq %rdi, %rdx # if last<=data break;
 	jle done
 	jmp loop1
 
 test2:
-	rrmovq %rcx, %r8
-	rrmovq %rsi, %r9
-	subq %r8, %r9
+	rrmovq %rcx, %r8 # %r8=i
+	rrmovq %rsi, %r9 # %r9=last
+	subq %r8, %r9 # if last<=i break;
 	jle test1
 	jmp loop2
 
