@@ -94,7 +94,7 @@ void update_2(int flag, int opt_s, int opt_tag) {
 // 时间戳越大，表示越久没被使用；同样地，刚刚被使用的行的时间戳为0。
 
 void update(int opt_s, int opt_tag) {
-    int tem = get_index(opt_s, opt_tag);//是否存在空行
+    int tem = get_index(opt_s, opt_tag);//是否能够匹配
     if (tem == -1) {// 如果找不到
         miss_cnt++;// 不命中计数器增加
         if (verbose) printf("miss "); // 输出跟踪
@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
     int opt;
     while (-1 != (opt = getopt(argc, argv, "hvs:E:b:t:"))) {
         switch (opt) {
-            case 'h':// 输出版主
+            case 'h':// 输出帮助
                 print_help();
                 exit(0);
             case 'v':// 是否跟踪
