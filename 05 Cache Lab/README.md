@@ -930,7 +930,7 @@ void trans_64_64(int M, int N, int A[N][M], int B[M][N]) {
 registerTransFunction(trans_64_64, trans_desc_64_64);// 注册函数，写在registerFunctions中
 ```
 
-运行``make``和``./test-trans -M 64 -N 64``指令，得到以下结果，表示完成了`` $64 \times 64$ 的矩阵优化``：
+运行``make``和``./test-trans -M 64 -N 64``指令，得到以下结果，表示完成了 $64 \times 64$ ``的矩阵优化``：
 
 ![](./Picture%20Assets/11.png)
 
@@ -1046,7 +1046,7 @@ registerTransFunction(trans_64_64, trans_desc_60_68);// 注册函数，写在reg
 
 ![](./Picture%20Assets/12.png)
 
-相比改变遍历顺序之前，真的被优化了！成功通过了 `` $60 \times 68$ 的矩阵优化``！
+相比改变遍历顺序之前，真的被优化了！成功完成了 $60 \times 68$ ``的矩阵优化``！
 
 运行``make``和``python3 ./driver.py``指令，得到以下结果：
 
