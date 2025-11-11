@@ -57,13 +57,21 @@ sudo apt-get install valgrind
 ``./test-csim``：对``Part A``进行评分。
 
 ``./csim -s 1 -E 1 -b 1 -t traces/yi2.trace``
+
 ``./csim -s 4 -E 2 -b 4 -t traces/yi.trace``
+
 ``./csim -s 2 -E 1 -b 4 -t traces/dave.trace``
+
 ``./csim -s 2 -E 1 -b 3 -t traces/trans.trace``
+
 ``./csim -s 2 -E 2 -b 3 -t traces/trans.trace``
+
 ``./csim -s 2 -E 4 -b 3 -t traces/trans.trace``
+
 ``./csim -s 5 -E 1 -b 5 -t traces/trans.trace``
+
 ``./csim -s 5 -E 1 -b 5 -t traces/long.trace``
+
 以上为``Part A``中对八个测试点的独立测评，可将指令中``csim``改为``csim-ref``，以获取每个测试用例的正确结果，亦可使用``-v``命令进行跟踪以debug。
 
 ``./test-trans -M 32 -N 32``：测试``Part B``中 $32 \times 32$ 的优化结果。
