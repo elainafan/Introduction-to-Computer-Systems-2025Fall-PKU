@@ -255,7 +255,7 @@ int open(char *filename, int flags,mode_t mode);
 
 而``flags``参数指明了进程如何访问这个文件：
 
-- ``O_RONDLY``：只读
+- ``O_RDONLY``：只读
 - ``O_WRONLY``：只写
 - ``O_RDWR``：可读可写
 
@@ -310,7 +310,7 @@ pid_t waitpid(pid_t pid,int* statusp,int options);
 - ``status``的几个宏：
   - ``WIFEXITED(status)``：若子进程通过``exit``或者一个返回正常终止，则返回真。
   - ``WEXITSTATUS(status)``：在``WIFEXITED(status)``返回真时，返回子进程的退出状态。
-  - ``WIFSGINALED(status)``：若子进程因为一个未被捕获的信号终止，则返回真。
+  - ``WIFSIGNALED(status)``：若子进程因为一个未被捕获的信号终止，则返回真。
   - ``WTERMSIG``：在``WIFSGINALED(status)``返回真时，返回导致子进程终止的信号的编号。
   - ``WIFSTOPPED(status)``：若引起返回的子进程当前是停止的，返回真。
   - ``WSTOPSIG(status)``：在``WIFSTOPPED(status)``返回真时，返回导致子进程停止的进程的编号。
@@ -359,9 +359,9 @@ int sigsuspend(const sigset_t *mask)
 相当于以下版本的原子化（不可中断版本），显式等待信号，避免父子进程竞争。
 
 ```c
-sigprocmask(SIG_SET_MASK,&mask,&prev);
+sigprocmask(SIG_SETMASK,&mask,&prev);
 pause();
-sigprocmask(SIG_SET_MASK,&prev,NULL);
+sigprocmask(SIG_SETMASK,&prev,NULL);
 ```
 
 既然讲到``sigsuspend``函数，那势必需要回顾一下竞争机制了：
@@ -607,7 +607,7 @@ void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
     if (sigprocmask(how, set, oldset) < 0)
     {
-        unix_error("sigpromask error");
+        unix_error("sigprocmask error");
         exit(1);
     }
     return;
@@ -1073,7 +1073,7 @@ case BUILTIN_NONE:
 ```
 
 ### 实现退出/quit
-实现退出是非常简单的，只需要在``swicth``的``BUILTIN_QUIT``中加入``exit(0)``即可：
+实现退出是非常简单的，只需要在``switch``的``BUILTIN_QUIT``中加入``exit(0)``即可：
 
 ```c
 case BUILTIN_QUIT:
@@ -1129,7 +1129,7 @@ case BUILTIN_BG:
     break;
 ```
 ### 作业重启转前台/fg
-根据``writup``，``fg job``命令通过发送``SIGCONT``信号重启``JOB``，并使其在前台运行，``job``的参数可以是``PID(即数字)``或``JID(即%数字)``。
+根据``writeup``，``fg job``命令通过发送``SIGCONT``信号重启``JOB``，并使其在前台运行，``job``的参数可以是``PID(即数字)``或``JID(即%数字)``。
 
 其思路与``bg``指令相似，根据``argv``取出对应``PID``或``JID``相同，以及发送``SIGCONT``信号也相同，这里不再赘述。
 
@@ -1448,7 +1448,7 @@ struct cmdline_tokens
       BUILTIN_FG,   // 转为前台
       BUILTIN_KILL, // 杀死job
       BUILTIN_NOHUP
-    } builtins; // 忽视SIGNUP，启动新进程
+    } builtins; // 忽视SIGHUP，启动新进程
 };
 
 /* End global variables */
@@ -1645,7 +1645,7 @@ void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
     if (sigprocmask(how, set, oldset) < 0)
     {
-        unix_error("sigpromask error");
+        unix_error("sigprocmask error");
         exit(1);
     }
     return;
