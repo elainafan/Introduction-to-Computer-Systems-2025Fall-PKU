@@ -1366,6 +1366,23 @@ void sigint_handler(int sig)
 
 根据以上思路，编写代码如下：
 
+```c
+void sigtstp_handler(int sig) {
+    int old_errno = errno;  // 存储旧errno，规则限制
+    sigset_t mask, mask_prev;
+    pid_t pid;
+    pid = fgpid(job_list);  // 找到前台进程
+    if (pid) {
+        Sigfillset(&mask);
+        Sigprocmask(SIG_BLOCK, &mask, &mask_prev);   // 屏蔽全部信号，保护全局数据结构
+        Kill(pid, SIGTSTP);                          // 给它发SIGTSTP信号
+        Sigprocmask(SIG_SETMASK, &mask_prev, NULL);  // 恢复屏蔽的信号
+    }
+    errno = old_errno;  // 恢复errno
+    return;
+}
+```
+
 ### 成品代码
 将上述全部代码拼在一起，得到成品代码：
 
