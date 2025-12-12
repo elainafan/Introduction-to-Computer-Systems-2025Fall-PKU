@@ -1,9 +1,3 @@
----
-title: 从零开始的Malloc Lab
-date: 2025-12-12
-categories: 
-    - 计算机系统导论
----
 # 从零开始的Malloc Lab
 
 > [!CAUTION]
