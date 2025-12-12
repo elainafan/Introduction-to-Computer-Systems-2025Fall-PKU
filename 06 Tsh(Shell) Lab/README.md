@@ -974,7 +974,7 @@ void eval(char *cmdline)
 ```
 
 ### 解析外部指令
-首先，根据``writeup``，父进程必须在创建子进程前，使用``sigprocmask``阻塞``SIGCHLD、SIGINT``和``SIGTSTP``信号。在调用``addjob``函数将子进程添加到``job_list``后，再使用``sigprocmask``解除这些信号的阻塞。由于子进程会继承父进程的信号阻塞集，因此子进程在加载新程序前，必须接触这些信号的阻塞。
+首先，根据``writeup``，父进程必须在创建子进程前，使用``sigprocmask``阻塞``SIGCHLD、SIGINT``和``SIGTSTP``信号。在调用``addjob``函数将子进程添加到``job_list``后，再使用``sigprocmask``解除这些信号的阻塞。由于子进程会继承父进程的信号阻塞集，因此子进程在加载新程序前，必须解除这些信号的阻塞。
 
 笔者注：事实上，阻塞所有信号也是可行的。
 
