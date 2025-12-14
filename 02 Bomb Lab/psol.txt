@@ -1,7 +1,8 @@
 A secret makes a woman a woman
-1 2 4 8 16 32
-4 -200
-6 6
+1 2 4 8 16 32 DoUKnowThatGaiusJuliusCaesarOnceSaid...
+6 163
+6 6 ...VeniVidiViciTwoThousandYearsAgo?
 CCDG
 6 5 1 3 4 2
+10101010100000101
 I love elaina.

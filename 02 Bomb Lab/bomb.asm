@@ -458,74 +458,74 @@ Disassembly of section .text:
 
 0000000000001664 <abracadabra>:
     1664:	f3 0f 1e fa          	endbr64
-    1668:	48 81 ec 98 00 00 00 	sub    $0x98,%rsp
-    166f:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
+    1668:	48 81 ec 98 00 00 00 	sub    $0x98,%rsp # 栈提供空间
+    166f:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax # 金丝雀值
     1676:	00 00 
-    1678:	48 89 84 24 88 00 00 	mov    %rax,0x88(%rsp)
+    1678:	48 89 84 24 88 00 00 	mov    %rax,0x88(%rsp) # %rax存在 %rsp+136处
     167f:	00 
-    1680:	31 c0                	xor    %eax,%eax
-    1682:	48 8d 4c 24 0c       	lea    0xc(%rsp),%rcx
-    1687:	48 8d 54 24 08       	lea    0x8(%rsp),%rdx
-    168c:	4c 8d 44 24 10       	lea    0x10(%rsp),%r8
-    1691:	48 8d 35 c3 2a 00 00 	lea    0x2ac3(%rip),%rsi        # 415b <_IO_stdin_used+0x15b>
+    1680:	31 c0                	xor    %eax,%eax # %eax=0
+    1682:	48 8d 4c 24 0c       	lea    0xc(%rsp),%rcx # %rcx=rsp+12
+    1687:	48 8d 54 24 08       	lea    0x8(%rsp),%rdx # %rdx=%rsp+8
+    168c:	4c 8d 44 24 10       	lea    0x10(%rsp),%r8 # %r8=%rsp+16
+    1691:	48 8d 35 c3 2a 00 00 	lea    0x2ac3(%rip),%rsi        # 415b <_IO_stdin_used+0x15b> 
     1698:	48 8d 3d e9 6f 00 00 	lea    0x6fe9(%rip),%rdi        # 8688 <input_strings+0x168>
     169f:	e8 9c fc ff ff       	call   1340 <__isoc99_sscanf@plt>
-    16a4:	83 f8 03             	cmp    $0x3,%eax
-    16a7:	74 20                	je     16c9 <abracadabra+0x65>
-    16a9:	b8 00 00 00 00       	mov    $0x0,%eax
-    16ae:	48 8b 94 24 88 00 00 	mov    0x88(%rsp),%rdx
+    16a4:	83 f8 03             	cmp    $0x3,%eax # %eax=3，跳转16c9
+    16a7:	74 20                	je     16c9 <abracadabra+0x65>  
+    16a9:	b8 00 00 00 00       	mov    $0x0,%eax # eax=0
+    16ae:	48 8b 94 24 88 00 00 	mov    0x88(%rsp),%rdx # %rdx=%rax
     16b5:	00 
-    16b6:	64 48 2b 14 25 28 00 	sub    %fs:0x28,%rdx
+    16b6:	64 48 2b 14 25 28 00 	sub    %fs:0x28,%rdx # 检验金丝雀
     16bd:	00 00 
-    16bf:	75 2b                	jne    16ec <abracadabra+0x88>
-    16c1:	48 81 c4 98 00 00 00 	add    $0x98,%rsp
+    16bf:	75 2b                	jne    16ec <abracadabra+0x88> 
+    16c1:	48 81 c4 98 00 00 00 	add    $0x98,%rsp # 栈空间回传
     16c8:	c3                   	ret
     16c9:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
     16ce:	48 8d 35 93 2a 00 00 	lea    0x2a93(%rip),%rsi        # 4168 <_IO_stdin_used+0x168>
     16d5:	e8 2b 06 00 00       	call   1d05 <strings_not_equal>
-    16da:	85 c0                	test   %eax,%eax
+    16da:	85 c0                	test   %eax,%eax # eax==0则跳转到16e5，但是此处要让它跳，因此需要输入相同的strings
     16dc:	74 07                	je     16e5 <abracadabra+0x81>
     16de:	b8 00 00 00 00       	mov    $0x0,%eax
-    16e3:	eb c9                	jmp    16ae <abracadabra+0x4a>
-    16e5:	b8 01 00 00 00       	mov    $0x1,%eax
-    16ea:	eb c2                	jmp    16ae <abracadabra+0x4a>
+    16e3:	eb c9                	jmp    16ae <abracadabra+0x4a> # 回跳，这个分支不能让它进
+    16e5:	b8 01 00 00 00       	mov    $0x1,%eax # eax=1
+    16ea:	eb c2                	jmp    16ae <abracadabra+0x4a> # 回跳
     16ec:	e8 af fb ff ff       	call   12a0 <__stack_chk_fail@plt>
 
 00000000000016f1 <alohomora>:
     16f1:	f3 0f 1e fa          	endbr64
-    16f5:	48 81 ec 88 00 00 00 	sub    $0x88,%rsp
-    16fc:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
+    16f5:	48 81 ec 88 00 00 00 	sub    $0x88,%rsp # 分配堆空间
+    16fc:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax # 金丝雀值
     1703:	00 00 
-    1705:	48 89 44 24 78       	mov    %rax,0x78(%rsp)
-    170a:	31 c0                	xor    %eax,%eax
-    170c:	48 8d 05 85 6e 00 00 	lea    0x6e85(%rip),%rax        # 8598 <input_strings+0x78>
+    1705:	48 89 44 24 78       	mov    %rax,0x78(%rsp) # (rsp+120)=%rax
+    170a:	31 c0                	xor    %eax,%eax # %eax=0
+    170c:	48 8d 05 85 6e 00 00 	lea    0x6e85(%rip),%rax        # 8598 <input_strings+0x78> # %rax=?
     1713:	eb 04                	jmp    1719 <alohomora+0x28>
-    1715:	48 83 c0 01          	add    $0x1,%rax
-    1719:	80 38 00             	cmpb   $0x0,(%rax)
+    1715:	48 83 c0 01          	add    $0x1,%rax # rax往前移动一个字节
+    1719:	80 38 00             	cmpb   $0x0,(%rax) # (%rax)!=0，则跳转回加1处
     171c:	75 f7                	jne    1715 <alohomora+0x24>
-    171e:	48 83 e8 01          	sub    $0x1,%rax
-    1722:	48 89 e2             	mov    %rsp,%rdx
-    1725:	eb 0a                	jmp    1731 <alohomora+0x40>
-    1727:	88 0a                	mov    %cl,(%rdx)
-    1729:	48 83 c2 01          	add    $0x1,%rdx
-    172d:	48 83 e8 01          	sub    $0x1,%rax
-    1731:	0f b6 08             	movzbl (%rax),%ecx
-    1734:	80 f9 20             	cmp    $0x20,%cl
-    1737:	74 0c                	je     1745 <alohomora+0x54>
+    171e:	48 83 e8 01          	sub    $0x1,%rax # rax减去，得到最后一个字符
+    1722:	48 89 e2             	mov    %rsp,%rdx # rdx=rsp
+    1725:	eb 0a                	jmp    1731 <alohomora+0x40> 
+    1727:	88 0a                	mov    %cl,(%rdx) # (%rdx)=%cl，注意此时%rdx是%rsp+?，因此在缓冲区
+    1729:	48 83 c2 01          	add    $0x1,%rdx # 相当于存进栈
+    172d:	48 83 e8 01          	sub    $0x1,%rax # %rax回退
+    1731:	0f b6 08             	movzbl (%rax),%ecx # %ecx=(%rax)
+    1734:	80 f9 20             	cmp    $0x20,%cl # %cl==32，若是空格则跳转
+    1737:	74 0c                	je     1745 <alohomora+0x54> #
     1739:	48 8d 35 58 6e 00 00 	lea    0x6e58(%rip),%rsi        # 8598 <input_strings+0x78>
-    1740:	48 39 f0             	cmp    %rsi,%rax
-    1743:	75 e2                	jne    1727 <alohomora+0x36>
-    1745:	c6 02 00             	movb   $0x0,(%rdx)
-    1748:	48 89 e7             	mov    %rsp,%rdi
-    174b:	48 8d 35 3e 2a 00 00 	lea    0x2a3e(%rip),%rsi        # 4190 <_IO_stdin_used+0x190>
-    1752:	e8 ae 05 00 00       	call   1d05 <strings_not_equal>
-    1757:	85 c0                	test   %eax,%eax
+    1740:	48 39 f0             	cmp    %rsi,%rax # 若不等于字符串开头，则回跳到1727
+    1743:	75 e2                	jne    1727 <alohomora+0x36> 
+    1745:	c6 02 00             	movb   $0x0,(%rdx) # (%rdx)=0
+    1748:	48 89 e7             	mov    %rsp,%rdi # %rdi=%rsp，即%rdx对应的字符串开头，这里反转了
+    174b:	48 8d 35 3e 2a 00 00 	lea    0x2a3e(%rip),%rsi        # 4190 <_IO_stdin_used+0x190> # 传入一个字符串比较
+    1752:	e8 ae 05 00 00       	call   1d05 <strings_not_equal> 
+    1757:	85 c0                	test   %eax,%eax # eax=0,则跳转到赋值为1部分，需要让它跳，即字符串相等
     1759:	74 1d                	je     1778 <alohomora+0x87>
-    175b:	b8 00 00 00 00       	mov    $0x0,%eax
-    1760:	48 8b 54 24 78       	mov    0x78(%rsp),%rdx
-    1765:	64 48 2b 14 25 28 00 	sub    %fs:0x28,%rdx
+    175b:	b8 00 00 00 00       	mov    $0x0,%eax # eax=0
+    1760:	48 8b 54 24 78       	mov    0x78(%rsp),%rdx # 金丝雀值检测 
+    1765:	64 48 2b 14 25 28 00 	sub    %fs:0x28,%rdx 
     176c:	00 00 
-    176e:	75 0f                	jne    177f <alohomora+0x8e>
+    176e:	75 0f                	jne    177f <alohomora+0x8e> 
     1770:	48 81 c4 88 00 00 00 	add    $0x88,%rsp
     1777:	c3                   	ret
     1778:	b8 01 00 00 00       	mov    $0x1,%eax
@@ -818,57 +818,57 @@ Disassembly of section .text:
 
 0000000000001b1e <emulate_fsm>:
     1b1e:	f3 0f 1e fa          	endbr64
-    1b22:	55                   	push   %rbp
-    1b23:	53                   	push   %rbx
-    1b24:	48 83 ec 08          	sub    $0x8,%rsp
-    1b28:	89 fd                	mov    %edi,%ebp
-    1b2a:	48 89 f3             	mov    %rsi,%rbx
-    1b2d:	eb 28                	jmp    1b57 <emulate_fsm+0x39>
-    1b2f:	0f be 03             	movsbl (%rbx),%eax
-    1b32:	83 e8 30             	sub    $0x30,%eax
-    1b35:	48 63 ed             	movslq %ebp,%rbp
+    1b22:	55                   	push   %rbp # rbp进栈
+    1b23:	53                   	push   %rbx # rbx进栈
+    1b24:	48 83 ec 08          	sub    $0x8,%rsp # 分配栈空间
+    1b28:	89 fd                	mov    %edi,%ebp # ebp=edi，即迭代次数
+    1b2a:	48 89 f3             	mov    %rsi,%rbx # rbx=rsi，即读入字符串
+    1b2d:	eb 28                	jmp    1b57 <emulate_fsm+0x39> # 跳转
+    1b2f:	0f be 03             	movsbl (%rbx),%eax # eax=(rbx)，即当前字符
+    1b32:	83 e8 30             	sub    $0x30,%eax # eax-=48，计算关于0的偏移量
+    1b35:	48 63 ed             	movslq %ebp,%rbp # ebp拓展
     1b38:	48 98                	cltq
-    1b3a:	48 8d 14 c5 00 00 00 	lea    0x0(,%rax,8),%rdx
+    1b3a:	48 8d 14 c5 00 00 00 	lea    0x0(,%rax,8),%rdx # rdx=当前字符*8
     1b41:	00 
-    1b42:	48 29 c2             	sub    %rax,%rdx
-    1b45:	48 8d 04 2a          	lea    (%rdx,%rbp,1),%rax
-    1b49:	48 8d 15 90 27 00 00 	lea    0x2790(%rip),%rdx        # 42e0 <transition_table>
-    1b50:	8b 2c 82             	mov    (%rdx,%rax,4),%ebp
-    1b53:	48 83 c3 01          	add    $0x1,%rbx
-    1b57:	0f b6 03             	movzbl (%rbx),%eax
-    1b5a:	84 c0                	test   %al,%al
-    1b5c:	74 0e                	je     1b6c <emulate_fsm+0x4e>
-    1b5e:	83 e8 30             	sub    $0x30,%eax
-    1b61:	3c 01                	cmp    $0x1,%al
+    1b42:	48 29 c2             	sub    %rax,%rdx # rdx=当前字符*7
+    1b45:	48 8d 04 2a          	lea    (%rdx,%rbp,1),%rax # rax=当前状态+当前字符*7
+    1b49:	48 8d 15 90 27 00 00 	lea    0x2790(%rip),%rdx        # 42e0 <transition_table> # rdx=转移表
+    1b50:	8b 2c 82             	mov    (%rdx,%rax,4),%ebp # ebp=rdx+4*rax，即转移表中的数值
+    1b53:	48 83 c3 01          	add    $0x1,%rbx # rbx++
+    1b57:	0f b6 03             	movzbl (%rbx),%eax # eax=(rbx)，即当前字符
+    1b5a:	84 c0                	test   %al,%al # 若eax==NULL，则跳转到返回处
+    1b5c:	74 0e                	je     1b6c <emulate_fsm+0x4e> 
+    1b5e:	83 e8 30             	sub    $0x30,%eax # eax-=48，计算关于0的偏移量
+    1b61:	3c 01                	cmp    $0x1,%al # 若al<=1，则回跳，否则爆炸，意思是只能是0和1
     1b63:	76 ca                	jbe    1b2f <emulate_fsm+0x11>
     1b65:	e8 b0 04 00 00       	call   201a <explode_bomb>
     1b6a:	eb c3                	jmp    1b2f <emulate_fsm+0x11>
-    1b6c:	89 e8                	mov    %ebp,%eax
-    1b6e:	48 83 c4 08          	add    $0x8,%rsp
-    1b72:	5b                   	pop    %rbx
-    1b73:	5d                   	pop    %rbp
+    1b6c:	89 e8                	mov    %ebp,%eax # eax=ebp
+    1b6e:	48 83 c4 08          	add    $0x8,%rsp # 恢复栈空间
+    1b72:	5b                   	pop    %rbx # 恢复rbx
+    1b73:	5d                   	pop    %rbp # 恢复rbp
     1b74:	c3                   	ret
 
 0000000000001b75 <check_synchronizing_sequence>:
-    1b75:	f3 0f 1e fa          	endbr64
-    1b79:	41 54                	push   %r12
-    1b7b:	55                   	push   %rbp
-    1b7c:	53                   	push   %rbx
-    1b7d:	48 89 fd             	mov    %rdi,%rbp
-    1b80:	48 89 fe             	mov    %rdi,%rsi
-    1b83:	bf 00 00 00 00       	mov    $0x0,%edi
-    1b88:	e8 91 ff ff ff       	call   1b1e <emulate_fsm>
-    1b8d:	41 89 c4             	mov    %eax,%r12d
-    1b90:	bb 01 00 00 00       	mov    $0x1,%ebx
-    1b95:	83 fb 06             	cmp    $0x6,%ebx
+    1b75:	f3 0f 1e fa          	endbr64 
+    1b79:	41 54                	push   %r12 # r12进栈
+    1b7b:	55                   	push   %rbp # rbp进栈
+    1b7c:	53                   	push   %rbx # rbx进栈
+    1b7d:	48 89 fd             	mov    %rdi,%rbp # rbp=rdi，即读入字符串
+    1b80:	48 89 fe             	mov    %rdi,%rsi # rsi=rdi，即读入字符串
+    1b83:	bf 00 00 00 00       	mov    $0x0,%edi # edi=0
+    1b88:	e8 91 ff ff ff       	call   1b1e <emulate_fsm> # 调用这个函数
+    1b8d:	41 89 c4             	mov    %eax,%r12d # r12d=eax
+    1b90:	bb 01 00 00 00       	mov    $0x1,%ebx # ebx=1
+    1b95:	83 fb 06             	cmp    $0x6,%ebx # 若ebx>6，则跳转到赋值为0并返回
     1b98:	7f 14                	jg     1bae <check_synchronizing_sequence+0x39>
-    1b9a:	48 89 ee             	mov    %rbp,%rsi
-    1b9d:	89 df                	mov    %ebx,%edi
-    1b9f:	e8 7a ff ff ff       	call   1b1e <emulate_fsm>
-    1ba4:	44 39 e0             	cmp    %r12d,%eax
+    1b9a:	48 89 ee             	mov    %rbp,%rsi # rsi=rbp，也就是读入字符串
+    1b9d:	89 df                	mov    %ebx,%edi # edi=ebx
+    1b9f:	e8 7a ff ff ff       	call   1b1e <emulate_fsm> # 调用这个函数
+    1ba4:	44 39 e0             	cmp    %r12d,%eax # 比较第一次的返回结果和当前返回结果，若不等于则跳转到赋值为-1处并返回
     1ba7:	75 0f                	jne    1bb8 <check_synchronizing_sequence+0x43>
-    1ba9:	83 c3 01             	add    $0x1,%ebx
-    1bac:	eb e7                	jmp    1b95 <check_synchronizing_sequence+0x20>
+    1ba9:	83 c3 01             	add    $0x1,%ebx # ebx+=1
+    1bac:	eb e7                	jmp    1b95 <check_synchronizing_sequence+0x20> # 回跳
     1bae:	b8 00 00 00 00       	mov    $0x0,%eax
     1bb3:	5b                   	pop    %rbx
     1bb4:	5d                   	pop    %rbp
@@ -879,28 +879,28 @@ Disassembly of section .text:
 
 0000000000001bbf <secret_phase>:
     1bbf:	f3 0f 1e fa          	endbr64
-    1bc3:	55                   	push   %rbp
-    1bc4:	53                   	push   %rbx
-    1bc5:	48 83 ec 18          	sub    $0x18,%rsp
-    1bc9:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
+    1bc3:	55                   	push   %rbp # %rbp进栈
+    1bc4:	53                   	push   %rbx # %rbx进栈
+    1bc5:	48 83 ec 18          	sub    $0x18,%rsp # %rsp分配空间
+    1bc9:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax # 金丝雀值
     1bd0:	00 00 
-    1bd2:	48 89 44 24 08       	mov    %rax,0x8(%rsp)
-    1bd7:	31 c0                	xor    %eax,%eax
-    1bd9:	e8 07 05 00 00       	call   20e5 <read_line>
-    1bde:	48 89 c5             	mov    %rax,%rbp
-    1be1:	bb 00 00 00 00       	mov    $0x0,%ebx
-    1be6:	eb 03                	jmp    1beb <secret_phase+0x2c>
-    1be8:	83 c3 01             	add    $0x1,%ebx
-    1beb:	48 63 c3             	movslq %ebx,%rax
-    1bee:	80 7c 05 00 00       	cmpb   $0x0,0x0(%rbp,%rax,1)
-    1bf3:	74 0c                	je     1c01 <secret_phase+0x42>
-    1bf5:	83 fb 10             	cmp    $0x10,%ebx
+    1bd2:	48 89 44 24 08       	mov    %rax,0x8(%rsp) 
+    1bd7:	31 c0                	xor    %eax,%eax # eax=0
+    1bd9:	e8 07 05 00 00       	call   20e5 <read_line> # 调用real_line，读入一行
+    1bde:	48 89 c5             	mov    %rax,%rbp # %rbp=%rax，即读入的字符串
+    1be1:	bb 00 00 00 00       	mov    $0x0,%ebx # ebx=0，跳转
+    1be6:	eb 03                	jmp    1beb <secret_phase+0x2c> 
+    1be8:	83 c3 01             	add    $0x1,%ebx  # ebx+=1
+    1beb:	48 63 c3             	movslq %ebx,%rax # rax=ebx
+    1bee:	80 7c 05 00 00       	cmpb   $0x0,0x0(%rbp,%rax,1) # 若(rbp+rax)=NULL，则跳转，这里取得是读入的第ebx个字符
+    1bf3:	74 0c                	je     1c01 <secret_phase+0x42> 
+    1bf5:	83 fb 10             	cmp    $0x10,%ebx # 若ebx<=16，则跳转，否则爆炸，注意此处先判断NULL，因此最多可以输入17个字符
     1bf8:	7e ee                	jle    1be8 <secret_phase+0x29>
     1bfa:	e8 1b 04 00 00       	call   201a <explode_bomb>
-    1bff:	eb e7                	jmp    1be8 <secret_phase+0x29>
-    1c01:	48 89 ef             	mov    %rbp,%rdi
-    1c04:	e8 6c ff ff ff       	call   1b75 <check_synchronizing_sequence>
-    1c09:	85 c0                	test   %eax,%eax
+    1bff:	eb e7                	jmp    1be8 <secret_phase+0x29> 
+    1c01:	48 89 ef             	mov    %rbp,%rdi # rdi=读入字符串
+    1c04:	e8 6c ff ff ff       	call   1b75 <check_synchronizing_sequence> # 调用这个函数
+    1c09:	85 c0                	test   %eax,%eax # eax!=0，则跳转爆炸，因此需要eax=0
     1c0b:	75 45                	jne    1c52 <secret_phase+0x93>
     1c0d:	48 8d 3d c4 25 00 00 	lea    0x25c4(%rip),%rdi        # 41d8 <_IO_stdin_used+0x1d8>
     1c14:	e8 57 f6 ff ff       	call   1270 <puts@plt>
@@ -908,16 +908,16 @@ Disassembly of section .text:
     1c20:	e8 4b f6 ff ff       	call   1270 <puts@plt>
     1c25:	48 8d 3d 34 26 00 00 	lea    0x2634(%rip),%rdi        # 4260 <_IO_stdin_used+0x260>
     1c2c:	e8 3f f6 ff ff       	call   1270 <puts@plt>
-    1c31:	48 8d 7c 24 04       	lea    0x4(%rsp),%rdi
-    1c36:	e8 e8 05 00 00       	call   2223 <phase_defused>
-    1c3b:	48 8b 44 24 08       	mov    0x8(%rsp),%rax
-    1c40:	64 48 2b 04 25 28 00 	sub    %fs:0x28,%rax
+    1c31:	48 8d 7c 24 04       	lea    0x4(%rsp),%rdi # 打印三个语句
+    1c36:	e8 e8 05 00 00       	call   2223 <phase_defused> # 调用phase_defused
+    1c3b:	48 8b 44 24 08       	mov    0x8(%rsp),%rax # 金丝雀值
+    1c40:	64 48 2b 04 25 28 00 	sub    %fs:0x28,%rax 
     1c47:	00 00 
     1c49:	75 0e                	jne    1c59 <secret_phase+0x9a>
-    1c4b:	48 83 c4 18          	add    $0x18,%rsp
-    1c4f:	5b                   	pop    %rbx
-    1c50:	5d                   	pop    %rbp
-    1c51:	c3                   	ret
+    1c4b:	48 83 c4 18          	add    $0x18,%rsp # 恢复栈结构
+    1c4f:	5b                   	pop    %rbx # 恢复rbx
+    1c50:	5d                   	pop    %rbp # 恢复rbp
+    1c51:	c3                   	ret # 返回
     1c52:	e8 c3 03 00 00       	call   201a <explode_bomb>
     1c57:	eb b4                	jmp    1c0d <secret_phase+0x4e>
     1c59:	e8 42 f6 ff ff       	call   12a0 <__stack_chk_fail@plt>
@@ -1073,7 +1073,7 @@ Disassembly of section .text:
 
 0000000000001e66 <skip>:
     1e66:	f3 0f 1e fa          	endbr64
-    1e6a:	53                   	push   %rbx
+    1e6a:	53                   	push   %rbx # rbx进栈
     1e6b:	48 63 15 a6 66 00 00 	movslq 0x66a6(%rip),%rdx        # 8518 <num_input_strings>
     1e72:	48 89 d0             	mov    %rdx,%rax
     1e75:	48 c1 e0 04          	shl    $0x4,%rax
@@ -1236,12 +1236,12 @@ Disassembly of section .text:
 
 00000000000020e5 <read_line>:
     20e5:	f3 0f 1e fa          	endbr64
-    20e9:	55                   	push   %rbp
-    20ea:	53                   	push   %rbx
+    20e9:	55                   	push   %rbp # rbp进栈
+    20ea:	53                   	push   %rbx # rbx进栈
     20eb:	48 83 ec 08          	sub    $0x8,%rsp
-    20ef:	b8 00 00 00 00       	mov    $0x0,%eax
-    20f4:	e8 6d fd ff ff       	call   1e66 <skip>
-    20f9:	48 85 c0             	test   %rax,%rax
+    20ef:	b8 00 00 00 00       	mov    $0x0,%eax # eax=0
+    20f4:	e8 6d fd ff ff       	call   1e66 <skip> # 调用skip函数
+    20f9:	48 85 c0             	test   %rax,%rax  
     20fc:	74 63                	je     2161 <read_line+0x7c>
     20fe:	8b 1d 14 64 00 00    	mov    0x6414(%rip),%ebx        # 8518 <num_input_strings>
     2104:	48 63 d3             	movslq %ebx,%rdx
@@ -1252,23 +1252,23 @@ Disassembly of section .text:
     2118:	48 8d 2c c2          	lea    (%rdx,%rax,8),%rbp
     211c:	48 89 ef             	mov    %rbp,%rdi
     211f:	e8 6c f1 ff ff       	call   1290 <strlen@plt>
-    2124:	83 f8 76             	cmp    $0x76,%eax
+    2124:	83 f8 76             	cmp    $0x76,%eax # 若字符串长度超过120，则跳转并调用函数
     2127:	0f 8f ac 00 00 00    	jg     21d9 <read_line+0xf4>
-    212d:	83 e8 01             	sub    $0x1,%eax
+    212d:	83 e8 01             	sub    $0x1,%eax # eax-=1
     2130:	48 98                	cltq
-    2132:	48 63 cb             	movslq %ebx,%rcx
-    2135:	48 89 ca             	mov    %rcx,%rdx
-    2138:	48 c1 e2 04          	shl    $0x4,%rdx
-    213c:	48 29 ca             	sub    %rcx,%rdx
+    2132:	48 63 cb             	movslq %ebx,%rcx # rcx=ebx
+    2135:	48 89 ca             	mov    %rcx,%rdx # rdx=rcx
+    2138:	48 c1 e2 04          	shl    $0x4,%rdx # rdx<<=4
+    213c:	48 29 ca             	sub    %rcx,%rdx # rdx=15*rcx
     213f:	48 8d 0d da 63 00 00 	lea    0x63da(%rip),%rcx        # 8520 <input_strings>
     2146:	48 8d 14 d1          	lea    (%rcx,%rdx,8),%rdx
     214a:	c6 04 02 00          	movb   $0x0,(%rdx,%rax,1)
     214e:	83 c3 01             	add    $0x1,%ebx
     2151:	89 1d c1 63 00 00    	mov    %ebx,0x63c1(%rip)        # 8518 <num_input_strings>
-    2157:	48 89 e8             	mov    %rbp,%rax
-    215a:	48 83 c4 08          	add    $0x8,%rsp
-    215e:	5b                   	pop    %rbx
-    215f:	5d                   	pop    %rbp
+    2157:	48 89 e8             	mov    %rbp,%rax # rax=rbp
+    215a:	48 83 c4 08          	add    $0x8,%rsp # 恢复栈
+    215e:	5b                   	pop    %rbx # rbx恢复
+    215f:	5d                   	pop    %rbp # rbp恢复
     2160:	c3                   	ret
     2161:	48 8b 05 08 63 00 00 	mov    0x6308(%rip),%rax        # 8470 <stdin@GLIBC_2.2.5>
     2168:	48 39 05 21 63 00 00 	cmp    %rax,0x6321(%rip)        # 8490 <infile>
@@ -1311,14 +1311,14 @@ Disassembly of section .text:
 
 0000000000002223 <phase_defused>:
     2223:	f3 0f 1e fa          	endbr64
-    2227:	53                   	push   %rbx
-    2228:	48 89 fb             	mov    %rdi,%rbx
-    222b:	c7 07 00 00 00 00    	movl   $0x0,(%rdi)
-    2231:	48 89 fe             	mov    %rdi,%rsi
-    2234:	bf 01 00 00 00       	mov    $0x1,%edi
-    2239:	e8 7a fc ff ff       	call   1eb8 <send_msg>
-    223e:	83 3b 01             	cmpl   $0x1,(%rbx)
-    2241:	75 0b                	jne    224e <phase_defused+0x2b>
+    2227:	53                   	push   %rbx # %rbx进栈
+    2228:	48 89 fb             	mov    %rdi,%rbx # %rbx=%rdi
+    222b:	c7 07 00 00 00 00    	movl   $0x0,(%rdi)  # %rdi=0
+    2231:	48 89 fe             	mov    %rdi,%rsi # %rsi=%rdi
+    2234:	bf 01 00 00 00       	mov    $0x1,%edi # %edi=1
+    2239:	e8 7a fc ff ff       	call   1eb8 <send_msg> # 需要跳过
+    223e:	83 3b 01             	cmpl   $0x1,(%rbx) # (%rbx)!=1
+    2241:	75 0b                	jne    224e <phase_defused+0x2b> 
     2243:	83 3d ce 62 00 00 06 	cmpl   $0x6,0x62ce(%rip)        # 8518 <num_input_strings>
     224a:	74 22                	je     226e <phase_defused+0x4b>
     224c:	5b                   	pop    %rbx
@@ -1330,7 +1330,7 @@ Disassembly of section .text:
     2264:	bf 08 00 00 00       	mov    $0x8,%edi
     2269:	e8 22 f1 ff ff       	call   1390 <exit@plt>
     226e:	e8 f1 f3 ff ff       	call   1664 <abracadabra>
-    2273:	85 c0                	test   %eax,%eax
+    2273:	85 c0                	test   %eax,%eax # %eax!=0，则跳转到返回函数
     2275:	75 1a                	jne    2291 <phase_defused+0x6e>
     2277:	48 8d 3d 92 22 00 00 	lea    0x2292(%rip),%rdi        # 4510 <transition_table+0x230>
     227e:	e8 ed ef ff ff       	call   1270 <puts@plt>
@@ -1338,7 +1338,7 @@ Disassembly of section .text:
     228a:	e8 e1 ef ff ff       	call   1270 <puts@plt>
     228f:	eb bb                	jmp    224c <phase_defused+0x29>
     2291:	e8 5b f4 ff ff       	call   16f1 <alohomora>
-    2296:	85 c0                	test   %eax,%eax
+    2296:	85 c0                	test   %eax,%eax # %eax=0，则跳转到返回函数
     2298:	74 30                	je     22ca <phase_defused+0xa7>
     229a:	48 8d 3d 7f 21 00 00 	lea    0x217f(%rip),%rdi        # 4420 <transition_table+0x140>
     22a1:	e8 ca ef ff ff       	call   1270 <puts@plt>
