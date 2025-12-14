@@ -338,7 +338,7 @@ x/s $rsi
 
 得到了以下输出：
 
-![](1.png)
+![](./Picture%20Assets/1.png)
 
 得到答案为``A secret makes a woman a woman``。
 
@@ -355,7 +355,7 @@ c
 
 得到以下输出，表示已经完成了``phase 1``：
 
-![](2.png)
+![](./Picture%20Assets/2.png)
 
 ### Phase 2
 注释掉``b phase_1``，便于调试。
@@ -465,7 +465,7 @@ c
 
 得到以下输出，表示已经完成了``phase 2``：
 
-![](3.png)
+![](./Picture%20Assets/3.png)
 
 ### Phase 3
 注释掉``b phase_2``，便于调试。
@@ -558,7 +558,7 @@ c
 x/s $rsi
 ```
 
-![](4.png)
+![](./Picture%20Assets/4.png)
 
 程序显示，正好是两个整数，并且与``%rsp+8``存金丝雀值相符合！
 
@@ -584,7 +584,7 @@ ni
 
 发现它跳转到了``phase_3+178``，即代码中的``18cf``处：
 
-![](5.png)
+![](./Picture%20Assets/5.png)
 
 再回到代码，看出它大概的C语言逻辑：
 
@@ -608,7 +608,7 @@ c
 
 得到以下输出，表示已经完成了``phase 3``：
 
-![](6.png)
+![](./Picture%20Assets/6.png)
 
 ### Phase 4
 注释掉``b phase_3``，便于调试。
@@ -733,7 +733,7 @@ c
 
 得到以下输出，表示已经完成了``phase 4``：
 
-![](7.png)
+![](./Picture%20Assets/7.png)
 
 ### Phase 5
 注释掉``b phase_5``，便于调试。
@@ -810,7 +810,7 @@ x/8d $rsi
 
 得到以下结果：
 
-![](8.png)
+![](./Picture%20Assets/8.png)
 
 也就得到了，这个数组的各个元素的值。
 
@@ -829,7 +829,7 @@ c
 
 得到以下输出，表示已经完成了``phase 5``:
 
-![](9.png)
+![](./Picture%20Assets/9.png)
 
 ### Phase 6
 注释掉``b phase_6``，便于调试。
@@ -1057,7 +1057,7 @@ x/24x $rdx // 如上文分析，打印96个字节的值。
 
 得到以下输出：
 
-![](10.png)
+![](./Picture%20Assets/10.png)
 
 一个令人疑惑的点是，为什么只有五个节点？
 
@@ -1075,7 +1075,7 @@ struct node{
 
 运行``x/4x 0x000055555555``，得到以下输出：
 
-![](11.png)
+![](./Picture%20Assets/11.png)
 
 于是就能确认这个数据结构是链表，同时可以补全上述代码：
 
@@ -1149,7 +1149,7 @@ I love elaina.
 
 得到以下输出，表示已经完成了``phase 6``:
 
-![](12.png)
+![](./Picture%20Assets/12.png)
 
 此处因为给``phase_defused``打了断点，因此无法显示最后的成功语句，DDL内是可以的。
 
