@@ -1949,5 +1949,10 @@ int main() {
 
 于是，真正意义上攻克了ICS的第二个Lab，Congratulations！
 
+## Secret Phase：二叉树
+笔者难以获取实际Bomb，且若获取仍需将前面的Phase都做一遍，因此放一位同学的Blog供大家参考。
+
+[Sam's Blog/BombLab](https://staaaaaaaaar.github.io/2025/10/14/ics-bomblab/#Secret-Phase)
+
 ## 参考文献
 [Arthals-更适合北大宝宝体质的Bomb Lab踩坑记](https://arthals.ink/blog/bomb-lab#phase-6)
