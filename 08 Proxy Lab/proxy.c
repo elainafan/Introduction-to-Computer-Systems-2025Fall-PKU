@@ -11,6 +11,25 @@
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
 
+/*
+ * proxy.c - 支持并发的 HTTP/1.0 代理（带小型内存缓存）。
+ *
+ * 并发模型：
+ * - 每个客户端连接创建一个分离(detached)线程。
+ * - 每个线程只处理一个请求，然后关闭连接。
+ *
+ * HTTP 行为：
+ * - 仅支持 GET 方法。
+ * - 会重写/规范化请求头，确保：
+ *   - 只发送一个 User-Agent（使用 user_agent_hdr）
+ *   - Connection: close 与 Proxy-Connection: close
+ * - 使用 HTTP/1.0 以简化连接管理。
+ *
+ * 缓存行为：
+ * - 命中：直接返回缓存的响应字节。
+ * - 未命中：转发到源站、将响应流式写回客户端；若对象大小 <= MAX_OBJECT_SIZE 则缓存。
+ */
+
 typedef char string[MAXLINE];
 typedef struct _URL
 {
@@ -29,6 +48,7 @@ static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64;
 
 int main(int argc, char **argv)
 {
+    /* 避免对已关闭 socket 写入导致进程被 SIGPIPE 终止。 */
     Signal(SIGPIPE, SIG_IGN);
     int listenfd, *connfd;
     string hostname, port;
@@ -39,6 +59,13 @@ int main(int argc, char **argv)
     if (argc != 2)
     {
         fprintf(stderr, "usage: %s <port>\n", argv[0]);
+        exit(1);
+    }
+
+    /* 在 query/add 之前必须初始化缓存一次。 */
+    if (init() < 0)
+    {
+        fprintf(stderr, "cache init failed\n");
         exit(1);
     }
 
@@ -68,6 +95,7 @@ int main(int argc, char **argv)
 
 static void *thread(void *vargp)
 {
+    /* 分离线程：线程退出后由系统自动回收资源。 */
     if (pthread_detach(pthread_self()) < 0)
     {
         fprintf(stderr, "pthread_detach error: %s\n", strerror(errno));
@@ -78,6 +106,8 @@ static void *thread(void *vargp)
     rio_t rio;
     rio_readinitb(&rio, connfd);
     free(vargp);
+
+    /* 读取请求行："METHOD URL VERSION\r\n" */
     if (rio_readlineb(&rio, buf, MAXLINE) <= 0)
     {
         fprintf(stderr, "fail to read request line\n");
@@ -88,12 +118,27 @@ static void *thread(void *vargp)
         fprintf(stderr, "malformed request line\n");
         return (void *)-1;
     }
+    /* 本实验代理主要要求支持 GET。 */
     if (!strcasecmp(method, "GET"))
         do_get(&rio, url);
-    else if (strcasecmp(method, "CONNECT"))
-        fprintf(stderr, "unknown request method\n");
+    else
+        fprintf(stderr, "unknown request method: %s\n", method);
     close(connfd);
     return NULL;
+}
+
+static void drain_request_headers(rio_t *client)
+{
+    /*
+     * 命中缓存时也要把客户端剩余请求头读完再关闭连接，
+     * 否则客户端可能还在发送头部就遇到提前关闭。
+     */
+    char buf[MAXLINE];
+    while (Rio_readlineb(client, buf, MAXLINE) > 0)
+    {
+        if (!strcmp(buf, "\r\n"))
+            break;
+    }
 }
 
 static void do_get(rio_t *client, string url)
@@ -101,21 +146,41 @@ static void do_get(rio_t *client, string url)
     string buf;
     ssize_t n = 0;
     int tot = 0;
+    /* 若命中缓存，直接返回。 */
     if (query(client, url))
+    {
+        drain_request_headers(client);
         return;
+    }
     URL _url;
+    /* 解析绝对 URL（期望格式 http://host[:port]/path）。 */
     if (parse_url(url, &_url) < 0)
     {
         fprintf(stderr, "Parse url error\n");
         return;
     }
     string header;
+    header[0] = '\0';
+
+    /* 构建转发给源站的请求头。 */
     parse_header(client, header, _url.hostname);
-    int serverfd = open_clientfd(_url.hostname, _url.hostname);
+
+    /* 与源站建立连接。 */
+    int serverfd = open_clientfd(_url.hostname, _url.port);
+    if (serverfd < 0)
+    {
+        fprintf(stderr, "open_clientfd error\n");
+        return;
+    }
     rio_t server_rio;
     rio_readinitb(&server_rio, serverfd);
-    sprintf(buf, "GET %s HTTP/1.0\r\n%s", _url.path, header);
+
+    /* 转发请求行与请求头。 */
+    snprintf(buf, MAXLINE, "GET %s HTTP/1.0\r\n", _url.path);
     rio_writen(serverfd, buf, strlen(buf));
+    rio_writen(serverfd, header, strlen(header));
+
+    /* 将源站响应流式写回；若对象足够小则同时缓冲用于缓存。 */
     char cache[MAX_OBJECT_SIZE];
     while ((n = rio_readnb(&server_rio, buf, MAXLINE)))
     {
@@ -147,6 +212,13 @@ static void do_get(rio_t *client, string url)
 
 static int parse_url(string url, URL *parsed)
 {
+    /*
+     * parse_url - 将绝对 URL 拆分为 hostname / port / path。
+     *
+     * 注意：
+     * - 该函数会临时修改输入 url 字符串：在解析过程中插入 '\0' 作为分隔符。
+     * - 若 URL 中没有端口，则默认端口为 80。
+     */
     char *host, *port, *path;
     const int n = strlen("http://");
     if (strncmp(url, "http://", n))
@@ -179,29 +251,52 @@ static int parse_url(string url, URL *parsed)
 
 static int parse_header(rio_t *client, string res, const string host)
 {
+    /*
+     * parse_header - 读取客户端请求头，并构造一个“规范化”的请求头块转发给源站。
+     *
+     * 会丢弃（并由代理统一补齐/替换）以下头：
+     * - User-Agent
+     * - Connection
+     * - Proxy-Connection
+     *
+     * 并保证一定存在 Host 头。
+     */
     string buf;
-    string hostname;
-    hostname[0] = '\0';
-    int hostlen = strlen("Host");
-    int useragentlen = strlen("User-Agent");
-    int connectionlen = strlen("Connection");
-    int proxyconnectionlen = strlen("Proxy-Connection");
-    rio_readlineb(client, buf, MAXLINE);
-    while (strcmp(buf, "\r\n"))
+    char host_hdr[MAXLINE];
+    host_hdr[0] = '\0';
+    while (Rio_readlineb(client, buf, MAXLINE) > 0)
     {
-        if (!strncmp(buf, "Host", hostlen))
-            strcpy(hostname, buf + strlen("Host: "));
-        else if (strncmp(buf, "User-Agent", useragentlen) && strncmp(buf, "Connection", connectionlen) &&
-                 strncmp(buf, "Proxy-Connection", proxyconnectionlen))
-            strcat(res, buf);
-        rio_readlineb(client, buf, MAXLINE);
+        if (!strcmp(buf, "\r\n"))
+            break;
+        if (!strncasecmp(buf, "Host:", 5))
+        {
+            strncpy(host_hdr, buf, MAXLINE - 1);
+            host_hdr[MAXLINE - 1] = '\0';
+            continue;
+        }
+        if (!strncasecmp(buf, "User-Agent:", 11) ||
+            !strncasecmp(buf, "Connection:", 11) ||
+            !strncasecmp(buf, "Proxy-Connection:", 17))
+            continue;
+
+        size_t left = MAXLINE - strlen(res) - 1;
+        if (left > 0)
+            strncat(res, buf, left);
     }
-    if (hostname[0] == '\0')
-        strcpy(hostname, host);
-    sprintf(res + strlen(res), "Host: %s\r\n", hostname);
-    sprintf(res + strlen(res), "Connection: close\r\n");
-    sprintf(res + strlen(res), "Proxy-Conection:close\r\n");
-    sprintf(res + strlen(res), "%s", user_agent_hdr);
-    sprintf(res + strlen(res), "\r\n");
+    if (host_hdr[0] == '\0')
+        snprintf(host_hdr, MAXLINE, "Host: %s\r\n", host);
+    size_t left;
+    left = MAXLINE - strlen(res) - 1;
+    if (left > 0)
+        strncat(res, host_hdr, left);
+    left = MAXLINE - strlen(res) - 1;
+    if (left > 0)
+        strncat(res, user_agent_hdr, left);
+    left = MAXLINE - strlen(res) - 1;
+    if (left > 0)
+        strncat(res, "Connection: close\r\n", left);
+    left = MAXLINE - strlen(res) - 1;
+    if (left > 0)
+        strncat(res, "Proxy-Connection: close\r\n\r\n", left);
     return 0;
 }
